@@ -126,6 +126,15 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 #stickyRate.show{display:flex}
 .chip{text-align:center;line-height:1.35}
 .chip.on{border-color:var(--magenta);color:var(--magenta)}
+.vartab{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.vartab th,.vartab td{padding:9px 10px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vartab th:first-child,.vartab td:first-child{text-align:left;color:var(--grey);font-weight:400}
+.vartab thead th{border-top:none}
+.vartab thead button{font:inherit;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--ink)}
+.vartab thead button:hover{border-color:var(--magenta);color:var(--magenta)}
+.vartab .cur{background:var(--magenta-tint)}
+.vartab thead .cur button{background:var(--magenta);border-color:var(--magenta);color:#fff}
+.vartab .rate{font-weight:700;color:var(--magenta)}
 </style>
 </head>
 <body>
@@ -232,9 +241,12 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="srow">
       <label for="runtime">Laufzeit</label>
       <select id="runtime" style="max-width:220px">
-        <option value="36">36 Monate</option>
-        <option value="48">48 Monate</option>
-        <option value="60" selected>60 Monate (Standard)</option>
+        <option value="12">12 Monate (1 Jahr)</option>
+        <option value="24">24 Monate (2 Jahre)</option>
+        <option value="36">36 Monate (3 Jahre)</option>
+        <option value="48">48 Monate (4 Jahre)</option>
+        <option value="60" selected>60 Monate (5 Jahre, Standard)</option>
+        <option value="flat">Flatrate – ohne Laufzeit, jederzeit kündbar</option>
       </select>
       <span></span>
     </div>
@@ -297,6 +309,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Konditionen Mietmodell</h3>
   <div class="grid g3">
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
+    <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
     <div><label for="aEnd">Endzahlung Übernahme (€)</label><input type="number" id="aEnd" min="0" step="10"></div>
     <div><label for="aKwh">Strom je Spülgang (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
@@ -362,6 +375,14 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <p class="chartnote" id="chartNote"></p>
     </div>
 
+    <div class="panel" style="margin-top:22px">
+      <h2>Kauf vs. Miete · Laufzeiten 1–5 Jahre</h2>
+      <div style="overflow-x:auto">
+        <table class="vartab" id="varTable"></table>
+      </div>
+      <p class="note" id="varNote"></p>
+    </div>
+
     <div class="cta">
       <a class="btn" id="btnMail" href="#">Angebot anfordern</a>
       <button class="btn ghost" type="button" id="btnVertrag">Mietvertrag erstellen</button>
@@ -416,7 +437,7 @@ const FACTORY = {
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   prices: {rein:92, trock:96},
   reinWg: 4000, trockWg: 40000,
-  zuschlag: 15, end: 240, kwh: 0, strom: 0.25,
+  zuschlag: 15, zuschlagFlat: 15, end: 240, kwh: 0, strom: 0.25,
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
@@ -440,7 +461,7 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
   if (over.prices) Object.keys(out.prices).forEach(k => { if (typeof over.prices[k] === 'number') out.prices[k] = over.prices[k]; });
-  ['zuschlag','end','kwh','strom','reinWg','trockWg'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','end','kwh','strom','reinWg','trockWg'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin','aktionsHinweis'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
@@ -515,14 +536,18 @@ function currentConfig(){
     wasser: +$('pWasser').value || 0,
     schutz: +$('pSchutz').value || 0,
     days, wg,
-    dh: +$('dh').value, wp: +$('wp').value, L: +$('runtime').value,
+    dh: +$('dh').value, wp: +$('wp').value,
+    /* Flatrate: keine Mindestlaufzeit – Rate wie Beispielrechnung laufzeitunabhängig auf 60 Monate amortisiert */
+    flat: $('runtime').value === 'flat',
+    L: $('runtime').value === 'flat' ? 60 : +$('runtime').value,
     waterId: wo.id, waterName: wo.name, basis,
     filter: (basis === 'liste' ? wo.liste : wo.aktion) || 0,
     iq: wo.iq ? ((basis === 'liste' ? CONFIG.iqMeter.liste : CONFIG.iqMeter.aktion) || 0) : 0,
     kart: wo.wechsel || 0, kap: wo.kap || 0, osmose: !(wo.kap > 0),
     rein: CONFIG.prices.rein, trock: CONFIG.prices.trock,
     reinWg: CONFIG.reinWg || 4000, trockWg: CONFIG.trockWg || 40000,
-    zuschlag: CONFIG.zuschlag/100, end: CONFIG.end, kwh: CONFIG.kwh, strom: CONFIG.strom
+    zuschlag: ($('runtime').value === 'flat' ? (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag) : CONFIG.zuschlag)/100,
+    end: CONFIG.end, kwh: CONFIG.kwh, strom: CONFIG.strom
   };
 }
 
@@ -583,7 +608,7 @@ function drawChart(c, r){
 }
 
 function shareUrl(c){
-  const p = new URLSearchParams({m:c.model, g:c.geraet, wa:c.wasser, s:c.schutz, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:c.L, md:mode});
+  const p = new URLSearchParams({m:c.model, g:c.geraet, wa:c.wasser, s:c.schutz, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
   return location.origin + location.pathname + '#' + p.toString();
 }
 
@@ -592,7 +617,7 @@ function buildMail(c, r){
     'Modell: ' + c.name,
     'Wasseraufbereitung: ' + c.waterName + ' (Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ')',
     'Betrieb: ' + c.days + ' Tage/Woche, ' + c.wg + ' Spülgänge/Tag, ' + c.dh + ' °dH',
-    'Laufzeit: ' + c.L + ' Monate',
+    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : 'Laufzeit: ' + c.L + ' Monate'),
     'Kalkulierte Mietrate: ' + eur2.format(r.rate) + ' / Monat','',
     'Konfigurations-Link: ' + shareUrl(c),'','Mit freundlichen Grüßen'];
   $('btnMail').href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Angebotsanfrage Spüler-Konfigurator: ' + c.name) +
@@ -608,11 +633,13 @@ function calc(){
   $('dhOut').textContent = c.dh + ' °dH' + (c.osmose ? ' · o. Einfluss' : '');
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
-  $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' + c.L + ' Monate';
+  $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' + (c.flat ? 'jederzeit kündbar' : c.L + ' Monate');
   $('incGeraet').textContent = 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '');
   $('incVerbrauch').textContent = c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen';
   $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
-  $('endNote').textContent = 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
+  $('endNote').textContent = c.flat
+    ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.'
+    : 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
 
   $('kInvest').textContent = eur.format(r.invest);
   $('kLauf').textContent = eur.format(r.lauf);
@@ -638,15 +665,35 @@ function calc(){
   $('rows').innerHTML = comp.map(x =>
     '<tr><td><span class="dot" style="background:' + COLORS[x.k] + '"></span>' + x.label + '</td>' +
     '<td>' + ct(x.v) + '</td><td>' + Math.round(x.v/sum*100) + ' %</td></tr>').join('');
-  $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' Spülgänge in ' + c.L + ' Monaten · ' +
+  $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' Spülgänge in ' + c.L + ' Monaten' + (c.flat ? ' (Flatrate, Betrachtung 5 Jahre)' : '') + ' · ' +
     r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je Spülgang · ' +
     Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') +
     ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.';
 
+  /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
+  const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
+  const vars = [12,24,36,48,60].map(L => ({L, flat:false, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
+  vars.push({L:60, flat:true, r: compute(Object.assign({}, c, {L:60, zuschlag: flatZ}))});
+  const isCur = v => v.flat === c.flat && (v.flat || v.L === c.L);
+  const vcell = (f, cls) => vars.map(v => '<td class="' + (isCur(v) ? 'cur ' : '') + (cls||'') + '">' + f(v) + '</td>').join('');
+  $('varTable').innerHTML =
+    '<thead><tr><th>Laufzeit</th>' + vars.map(v =>
+      '<th class="' + (isCur(v) ? 'cur' : '') + '"><button type="button" data-l="' + (v.flat ? 'flat' : v.L) + '">' + (v.flat ? 'Flatrate' : v.L + ' Monate') + '</button><div class="hint" style="margin-top:4px">' + (v.flat ? 'jederzeit kündbar' : (v.L/12) + (v.L === 12 ? ' Jahr' : ' Jahre')) + '</div></th>').join('') + '</tr></thead>' +
+    '<tbody>' +
+    '<tr><td>Mietrate je Monat</td>' + vcell(v => eur2.format(v.r.rate), 'rate') + '</tr>' +
+    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : eur.format(v.r.rate * v.L)) + '</tr>' +
+    '<tr><td>Miete je Spülgang</td>' + vcell(v => ct(v.r.rate * v.L / v.r.wgTotal + v.r.neben)) + '</tr>' +
+    '<tr><td>Kauf gesamt (inkl. Rundumschutz)</td>' + vcell(v => v.flat ? '–' : eur.format(v.r.total)) + '</tr>' +
+    '<tr><td>Kauf je Spülgang</td>' + vcell(v => v.flat ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
+    '</tbody>';
+  $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
+  $('varNote').textContent = 'Spalte anklicken, um Laufzeit bzw. Flatrate zu übernehmen. Je Spülgang inkl. Wasser' + (c.kwh > 0 ? ' und Strom' : '') +
+    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je Spülgang auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
+
   drawChart(c, r);
   buildMail(c, r);
   $('printSummary').innerHTML = 'Konfiguration: ' + c.name + ' · ' + c.days + ' Tage/Woche · ' + c.wg +
-    ' Spülgänge/Tag · ' + c.dh + ' °dH · Laufzeit ' + c.L + ' Monate · Stand ' + new Date().toLocaleDateString('de-AT');
+    ' Spülgänge/Tag · ' + c.dh + ' °dH · ' + (c.flat ? 'Flatrate (jederzeit kündbar)' : 'Laufzeit ' + c.L + ' Monate') + ' · Stand ' + new Date().toLocaleDateString('de-AT');
 }
 
 /* ===== Admin ===== */
@@ -714,6 +761,7 @@ function renderAdmin(){
   $('aReinWg').value = CONFIG.reinWg;
   $('aTrockWg').value = CONFIG.trockWg;
   $('aZuschlag').value = CONFIG.zuschlag;
+  $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
   $('aEnd').value = CONFIG.end;
   $('aKwh').value = CONFIG.kwh;
   $('aStrom').value = CONFIG.strom;
@@ -725,7 +773,7 @@ function renderAdmin(){
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'], aRein:['prices','rein'], aTrock:['prices','trock'],
                aReinWg:['reinWg'], aTrockWg:['trockWg'],
-               aZuschlag:['zuschlag'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
@@ -864,12 +912,12 @@ function vertragHtml(c, r, k){
   rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+'), Rundumschutz, Wartung inkl. Filtertausch, Technikereinsatz Mo\u2013Fr')+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', monate+' Monate ab betriebsfertiger \u00dcbergabe')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe \u2013 beidseitig zum Monatsende k\u00fcndbar (Flatrate)' : monate+' Monate ab betriebsfertiger \u00dcbergabe')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' Sp\u00fclg\u00e4nge/Tag, Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)')+'</table>'+
   '<h2>4. Vertragsende</h2>'+
-  '<p>Nach Ablauf der Mietdauer nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck. Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung von '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
+  '<p>'+(c.flat ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten monatlich zum Monatsende gek\u00fcndigt werden. Nach Vertragsende nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung von '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
   '<h2>5. Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>6. Sonstiges</h2>'+
