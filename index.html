@@ -273,12 +273,15 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <th style="padding:6px 8px;font-weight:500">Liste €</th>
           <th style="padding:6px 8px;font-weight:500">Wechsel €</th>
           <th style="padding:6px 8px;font-weight:500">Kapazität l (10 °dH)</th>
+          <th style="padding:6px 8px;font-weight:500">iQ Meter</th>
+          <th></th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
-  <p class="hint" style="margin-top:6px">Kapazität 0 = härteunabhängig, Wechsel 1× jährlich (Osmose). Bei Osmose entfällt der iQ Meter.</p>
+  <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddWater" style="padding:8px 16px;font-size:13px">+ Option hinzufügen</button></p>
+  <p class="hint" style="margin-top:6px">Kapazität 0 = härteunabhängig, Wechsel 1× jährlich (Osmose). iQ Meter abgehakt = wird mitgerechnet; bei Osmose entfällt er.</p>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Preise Zubehör und Verbrauch</h3>
   <div class="grid g3">
@@ -286,6 +289,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aIqL">iQ Meter Liste (€)</label><input type="number" id="aIqL" min="0" step="1"></div>
     <div><label for="aRein">Spülmittel 12 kg (€)</label><input type="number" id="aRein" min="0" step="0.5"></div>
     <div><label for="aTrock">Glanztrockner 12 kg (€)</label><input type="number" id="aTrock" min="0" step="0.5"></div>
+    <div><label for="aReinWg">Spülgänge je Spülmittel-Gebinde</label><input type="number" id="aReinWg" min="1" step="100"></div>
+    <div><label for="aTrockWg">Spülgänge je Trockner-Gebinde</label><input type="number" id="aTrockWg" min="1" step="1000"></div>
   </div>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Konditionen Mietmodell</h3>
@@ -682,21 +687,32 @@ function renderAdmin(){
     tr.innerHTML =
       '<td style="padding:5px 8px 5px 0"><input type="text" data-i="' + i + '" data-k="name" value="" style="width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>' +
       ['aktion','liste','wechsel','kap'].map(k =>
-        '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + w[k] + '" style="width:100%;min-width:84px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>').join('');
+        '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + w[k] + '" style="width:100%;min-width:84px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>').join('') +
+      '<td style="padding:5px 8px;text-align:center"><input type="checkbox" data-i="' + i + '" data-k="iq"' + (w.iq ? ' checked' : '') + ' style="width:20px;height:20px;accent-color:var(--magenta)"></td>' +
+      '<td style="padding:5px 0 5px 8px"><button type="button" data-wdel="' + i + '" title="Option löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = w.name;
     wtb.appendChild(tr);
   });
   wtb.querySelectorAll('input').forEach(inp => inp.oninput = () => {
     const i = +inp.dataset.i, k = inp.dataset.k;
-    CONFIG.water[i][k] = k === 'name' ? inp.value : (+inp.value || 0);
+    CONFIG.water[i][k] = k === 'name' ? inp.value : (k === 'iq' ? inp.checked : (+inp.value || 0));
     saveLocal();
     buildWaterSelect($('waterSel').value);
     calc();
+  });
+  wtb.querySelectorAll('button[data-wdel]').forEach(btn => btn.onclick = () => {
+    if (CONFIG.water.length <= 1) { alert('Mindestens eine Wasseraufbereitungs-Option muss bestehen bleiben.'); return; }
+    const i = +btn.dataset.wdel;
+    if (!confirm('Option "' + CONFIG.water[i].name + '" löschen?')) return;
+    CONFIG.water.splice(i, 1);
+    saveLocal(); buildWaterSelect(); renderAdmin(); calc();
   });
   $('aIqA').value = CONFIG.iqMeter.aktion;
   $('aIqL').value = CONFIG.iqMeter.liste;
   $('aRein').value = CONFIG.prices.rein;
   $('aTrock').value = CONFIG.prices.trock;
+  $('aReinWg').value = CONFIG.reinWg;
+  $('aTrockWg').value = CONFIG.trockWg;
   $('aZuschlag').value = CONFIG.zuschlag;
   $('aEnd').value = CONFIG.end;
   $('aKwh').value = CONFIG.kwh;
@@ -707,6 +723,7 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'], aRein:['prices','rein'], aTrock:['prices','trock'],
+               aReinWg:['reinWg'], aTrockWg:['trockWg'],
                aZuschlag:['zuschlag'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
@@ -740,6 +757,12 @@ $('btnAddModel').onclick = () => {
   const id = 'm' + Date.now().toString(36);
   CONFIG.models.push({id, name:'Neues Modell', geraet:2000, wasser:4, schutz:399, wg:24});
   saveLocal(); buildSelect(sel.value); renderAdmin(); calc();
+};
+
+$('btnAddWater').onclick = () => {
+  const id = 'w' + Date.now().toString(36);
+  CONFIG.water.push({id, name:'Neue Option', aktion:395, liste:395, wechsel:204, kap:9000, iq:true});
+  saveLocal(); buildWaterSelect($('waterSel').value); renderAdmin(); calc();
 };
 
 $('btnExport').onclick = () => {
