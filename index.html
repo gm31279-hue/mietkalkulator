@@ -437,7 +437,8 @@ const FACTORY = {
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   prices: {rein:92, trock:96},
   reinWg: 4000, trockWg: 40000,
-  zuschlag: 15, zuschlagFlat: 15, end: 240, kwh: 0, strom: 0.25,
+  /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar */
+  zuschlag: 15, zuschlagFlat: 30, end: 240, kwh: 0, strom: 0.25,
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
