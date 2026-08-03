@@ -157,17 +157,27 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   <section class="panel" id="cfg" aria-labelledby="s1">
     <h2 id="s1">1 · Modell wählen</h2>
-    <div class="grid g2" style="margin-bottom:14px">
+    <div class="grid g3" style="margin-bottom:14px">
       <div>
         <label for="model">Modell</label>
         <select id="model"></select>
       </div>
-      <div style="align-self:end;font-size:13px;color:var(--grey);padding-bottom:11px">Alle Preise und Verbrauchswerte sind bereits hinterlegt.</div>
+      <div>
+        <label for="waterSel">Wasseraufbereitung</label>
+        <select id="waterSel"></select>
+      </div>
+      <div>
+        <label for="preisbasis">Preisbasis</label>
+        <select id="preisbasis">
+          <option value="aktion" selected>Aktion</option>
+          <option value="liste">Liste</option>
+        </select>
+      </div>
     </div>
-    <div class="grid g4" id="geraeteFelder" hidden>
+    <p class="hint" id="waterHint" style="margin-bottom:4px">Alle Preise und Verbrauchswerte sind bereits hinterlegt. Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.</p>
+    <div class="grid g4" id="geraeteFelder" hidden style="margin-top:10px">
       <div><label for="pGeraet">Listenpreis Gerät (€)</label><input type="number" id="pGeraet" min="0" step="10"></div>
-      <div><label for="pTank">Tankinhalt (l)</label><input type="number" id="pTank" min="1" step="0.5"></div>
-      <div><label for="pBoiler">Boiler je Spülgang (l)</label><input type="number" id="pBoiler" min="0.5" step="0.1"></div>
+      <div><label for="pWasser">Wasser je Spülgang (l)</label><input type="number" id="pWasser" min="0.5" step="0.1"></div>
       <div><label for="pSchutz">Rundumschutz 5 J. (€)</label><input type="number" id="pSchutz" min="0" step="10"></div>
     </div>
   </section>
@@ -241,9 +251,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <thead>
         <tr style="text-align:left;color:var(--grey)">
           <th style="padding:6px 8px 6px 0;font-weight:500">Modellname</th>
-          <th style="padding:6px 8px;font-weight:500">Listenpreis €</th>
-          <th style="padding:6px 8px;font-weight:500">Tank l</th>
-          <th style="padding:6px 8px;font-weight:500">Boiler l/SG</th>
+          <th style="padding:6px 8px;font-weight:500">Preis €</th>
+          <th style="padding:6px 8px;font-weight:500">Wasser l/SG</th>
           <th style="padding:6px 8px;font-weight:500">Schutz 5 J. €</th>
           <th style="padding:6px 8px;font-weight:500">SG/Tag</th>
           <th></th>
@@ -254,11 +263,27 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
   <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddModel" style="padding:8px 16px;font-size:13px">+ Modell hinzufügen</button></p>
 
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Wasseraufbereitung (Preise laut Brita-Konditionen, Stand Juli 2026)</h3>
+  <div style="overflow-x:auto">
+    <table id="waterTable" style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px">
+      <thead>
+        <tr style="text-align:left;color:var(--grey)">
+          <th style="padding:6px 8px 6px 0;font-weight:500">Option</th>
+          <th style="padding:6px 8px;font-weight:500">Aktion €</th>
+          <th style="padding:6px 8px;font-weight:500">Liste €</th>
+          <th style="padding:6px 8px;font-weight:500">Wechsel €</th>
+          <th style="padding:6px 8px;font-weight:500">Kapazität l (10 °dH)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:6px">Kapazität 0 = härteunabhängig, Wechsel 1× jährlich (Osmose). Bei Osmose entfällt der iQ Meter.</p>
+
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Preise Zubehör und Verbrauch</h3>
   <div class="grid g3">
-    <div><label for="aFilter">Wasserfilter Brita 1200 (€)</label><input type="number" id="aFilter" min="0" step="0.5"></div>
-    <div><label for="aIq">iQ Meter (€)</label><input type="number" id="aIq" min="0" step="1"></div>
-    <div><label for="aKart">Ersatzkartusche (€)</label><input type="number" id="aKart" min="0" step="0.5"></div>
+    <div><label for="aIqA">iQ Meter Aktion (€)</label><input type="number" id="aIqA" min="0" step="1"></div>
+    <div><label for="aIqL">iQ Meter Liste (€)</label><input type="number" id="aIqL" min="0" step="1"></div>
     <div><label for="aRein">Spülmittel 12 kg (€)</label><input type="number" id="aRein" min="0" step="0.5"></div>
     <div><label for="aTrock">Glanztrockner 12 kg (€)</label><input type="number" id="aTrock" min="0" step="0.5"></div>
   </div>
@@ -303,8 +328,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <p class="big m"><span id="rate">–</span> <small>/ Monat</small></p>
         <p class="sub" id="mieteSub">0 € Investition · SEPA-Einzug · 60 Monate</p>
         <table>
-          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Gerät, Wasserfilter, iQ Meter</td><td></td></tr>
-          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Spülmittel, Trockner, Kartuschen</td><td></td></tr>
+          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incGeraet">Gerät, Wasseraufbereitung, iQ Meter</span></td><td></td></tr>
+          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incVerbrauch">Spülmittel, Trockner, Kartuschen</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Rundumschutz + Wartung</td><td></td></tr>
           <tr><td class="inc">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
@@ -365,15 +390,24 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </footer>
 
 <script>
+/* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
+   wasser = Liter je Spülgang · kap = Kartuschen-Kapazität in l bei 10 °dH (0 = härteunabhängig, Wechsel 1× jährlich) */
 const FACTORY = {
-  version: 1,
+  version: 2,
   models: [
-    {id:'o31', name:'Ocean 31.DE · Gläserspüler', geraet:2120, tank:7, boiler:2.6, schutz:399, wg:24},
-    {id:'o41', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, tank:9, boiler:2.8, schutz:399, wg:30},
-    {id:'o61', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, tank:20, boiler:6, schutz:399, wg:18},
-    {id:'o80', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, tank:35, boiler:7.5, schutz:499, wg:40}
+    {id:'o31', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, schutz:399, wg:24},
+    {id:'o41', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, schutz:399, wg:30},
+    {id:'o61', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, schutz:399, wg:18},
+    {id:'o80', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, schutz:499, wg:40}
   ],
-  prices: {filter:930.5, iq:164, kart:150.5, rein:92, trock:96},
+  water: [
+    {id:'c1100', name:'C1100 Clean', aktion:395, liste:395, wechsel:204, kap:9000, iq:true},
+    {id:'c1100x', name:'C1100 Clean Extra', aktion:395, liste:395, wechsel:204, kap:9000, iq:true},
+    {id:'osmose', name:'Osmose ohne Tank', aktion:1600, liste:2160, wechsel:305, kap:0, iq:false}
+  ],
+  iqMeter: {aktion:115, liste:164},
+  prices: {rein:92, trock:96},
+  reinWg: 4000, trockWg: 40000,
   zuschlag: 15, end: 240, kwh: 0, strom: 0.25,
   email: 'office@stoelner.at', pin: '720'
 };
@@ -394,9 +428,11 @@ const sel = $('model');
 function mergeConfig(base, over){
   const out = clone(base);
   if (!over || typeof over !== 'object') return out;
-  if (Array.isArray(over.models) && over.models.length) out.models = clone(over.models);
+  if (Array.isArray(over.models) && over.models.length && over.models.every(m => typeof m.wasser === 'number')) out.models = clone(over.models);
+  if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
+  if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
   if (over.prices) Object.keys(out.prices).forEach(k => { if (typeof over.prices[k] === 'number') out.prices[k] = over.prices[k]; });
-  ['zuschlag','end','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','end','kwh','strom','reinWg','trockWg'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
@@ -411,16 +447,26 @@ function buildSelect(keepId){
   if (keepId && [...sel.options].some(o => o.value === keepId)) sel.value = keepId;
 }
 
+function buildWaterSelect(keepId){
+  const ws = $('waterSel');
+  ws.innerHTML = '';
+  CONFIG.water.forEach(w => { const o = document.createElement('option'); o.value = w.id; o.textContent = w.name; ws.appendChild(o); });
+  if (keepId && [...ws.options].some(o => o.value === keepId)) ws.value = keepId;
+}
+
 function selectedModel(){
-  if (sel.value === '__free') return {id:'__free', name:'Eigenes Modell', geraet:3000, tank:12, boiler:4, schutz:399, wg:24};
+  if (sel.value === '__free') return {id:'__free', name:'Eigenes Modell', geraet:3000, wasser:4, schutz:399, wg:24};
   return CONFIG.models.find(x => x.id === sel.value) || CONFIG.models[0];
+}
+
+function selectedWater(){
+  return CONFIG.water.find(w => w.id === $('waterSel').value) || CONFIG.water[0];
 }
 
 function loadModelFields(){
   const m = selectedModel();
   $('pGeraet').value = m.geraet;
-  $('pTank').value = m.tank;
-  $('pBoiler').value = m.boiler;
+  $('pWasser').value = m.wasser;
   $('pSchutz').value = m.schutz;
   $('wg').value = m.wg;
 }
@@ -453,16 +499,21 @@ function currentConfig(){
   const days = +$('days').value;
   const wg = mode === 'schaetz' ? estimateWg(days) : +$('wg').value;
   const m = selectedModel();
+  const wo = selectedWater();
+  const basis = $('preisbasis').value;
   return {
     model: sel.value, name: m.name,
     geraet: +$('pGeraet').value || 0,
-    tank: +$('pTank').value || 0,
-    boiler: +$('pBoiler').value || 0,
+    wasser: +$('pWasser').value || 0,
     schutz: +$('pSchutz').value || 0,
     days, wg,
     dh: +$('dh').value, wp: +$('wp').value, L: +$('runtime').value,
-    filter: CONFIG.prices.filter, iq: CONFIG.prices.iq, kart: CONFIG.prices.kart,
+    waterId: wo.id, waterName: wo.name, basis,
+    filter: (basis === 'liste' ? wo.liste : wo.aktion) || 0,
+    iq: wo.iq ? ((basis === 'liste' ? CONFIG.iqMeter.liste : CONFIG.iqMeter.aktion) || 0) : 0,
+    kart: wo.wechsel || 0, kap: wo.kap || 0, osmose: !(wo.kap > 0),
     rein: CONFIG.prices.rein, trock: CONFIG.prices.trock,
+    reinWg: CONFIG.reinWg || 4000, trockWg: CONFIG.trockWg || 40000,
     zuschlag: CONFIG.zuschlag/100, end: CONFIG.end, kwh: CONFIG.kwh, strom: CONFIG.strom
   };
 }
@@ -470,13 +521,12 @@ function currentConfig(){
 function compute(c){
   const weeks = c.L/12*52;
   const wgTotal = Math.max(1, c.wg * c.days * weeks);
-  const wWeek = (c.tank + c.wg * c.boiler) * c.days;
-  const cap = 12000 * 10 / c.dh;
-  const kartN = weeks * wWeek / cap;
-  const litersPerWash = (c.wg > 0 ? c.tank / c.wg : 0) + c.boiler;
-  const schutzL = c.schutz * c.L / 60;
+  const litersPerWash = c.wasser;
+  /* Kartuschenbedarf = Waschgänge × Liter je Spülgang ÷ Kapazität (härtekorrigiert) · Osmose: Membrantausch 1× jährlich */
+  const kartN = c.kap > 0 ? wgTotal * litersPerWash * c.dh / 10 / c.kap : c.L / 12;
+  const schutzL = c.schutz; /* Rundumschutz: einmalig, voller Betrag – wie Beispielrechnung V2 */
   const invest = c.geraet + c.filter + c.iq + schutzL;
-  const lauf = kartN * c.kart + wgTotal*3/12000*c.rein + wgTotal*0.3/12000*c.trock;
+  const lauf = kartN * c.kart + wgTotal/c.reinWg*c.rein + wgTotal/c.trockWg*c.trock;
   const total = invest + lauf;
   const rate = total / c.L * (1 + c.zuschlag);
   const waterPerWash = litersPerWash/1000 * c.wp;
@@ -525,13 +575,14 @@ function drawChart(c, r){
 }
 
 function shareUrl(c){
-  const p = new URLSearchParams({m:c.model, g:c.geraet, t:c.tank, b:c.boiler, s:c.schutz, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:c.L, md:mode});
+  const p = new URLSearchParams({m:c.model, g:c.geraet, wa:c.wasser, s:c.schutz, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:c.L, md:mode});
   return location.origin + location.pathname + '#' + p.toString();
 }
 
 function buildMail(c, r){
   const lines = ['Guten Tag,','','bitte um ein verbindliches Angebot auf Basis dieser Konfiguration:','',
     'Modell: ' + c.name,
+    'Wasseraufbereitung: ' + c.waterName + ' (Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ')',
     'Betrieb: ' + c.days + ' Tage/Woche, ' + c.wg + ' Spülgänge/Tag, ' + c.dh + ' °dH',
     'Laufzeit: ' + c.L + ' Monate',
     'Kalkulierte Mietrate: ' + eur2.format(r.rate) + ' / Monat','',
@@ -546,10 +597,18 @@ function calc(){
   $('daysOut').textContent = c.days + (c.days === 1 ? ' Tag' : ' Tage');
   $('wgOut').textContent = c.wg;
   document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', +x.dataset.wg === c.wg));
-  $('dhOut').textContent = c.dh + ' °dH';
+  $('dhOut').textContent = c.dh + ' °dH' + (c.osmose ? ' · o. Einfluss' : '');
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' + c.L + ' Monate';
+  $('incGeraet').textContent = 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '');
+  $('incVerbrauch').textContent = c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen';
+  const waterTips = {
+    c1100:  'C1100 Clean: normales Spülergebnis, reduziert Chemie und verhindert Korrosion.',
+    c1100x: 'C1100 Clean Extra: für polierfreie Gläser, z. B. Weingläser.',
+    osmose: 'Osmose: für das perfekte Ergebnis oder sehr schlechtes Wasser · härteunabhängig, iQ Meter entfällt.'
+  };
+  $('waterHint').textContent = (waterTips[c.waterId] || '') + ' Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.';
   $('endNote').textContent = 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
 
   $('kInvest').textContent = eur.format(r.invest);
@@ -563,8 +622,8 @@ function calc(){
 
   const comp = [
     {k:'geraet', label:'Gerät (Laufzeit-Anteil)', v:c.geraet/r.wgTotal},
-    {k:'wasserauf', label:'Wasseraufbereitung (Filter, iQ, Kartuschen)', v:(c.filter + c.iq + r.kartN*c.kart)/r.wgTotal},
-    {k:'chemie', label:'Spülmittel + Glanztrockner', v:(r.wgTotal*3/12000*c.rein + r.wgTotal*0.3/12000*c.trock)/r.wgTotal},
+    {k:'wasserauf', label:'Wasseraufbereitung (' + c.waterName + (c.osmose ? ', Membrantausch)' : ', iQ, Kartuschen)'), v:(c.filter + c.iq + r.kartN*c.kart)/r.wgTotal},
+    {k:'chemie', label:'Spülmittel + Glanztrockner', v:(r.wgTotal/c.reinWg*c.rein + r.wgTotal/c.trockWg*c.trock)/r.wgTotal},
     {k:'schutz', label:'Rundumschutz + Wartung', v:r.schutzL/r.wgTotal},
     {k:'wasser', label:'Frisch- und Abwasser', v:r.waterPerWash}
   ];
@@ -578,7 +637,8 @@ function calc(){
     '<td>' + ct(x.v) + '</td><td>' + Math.round(x.v/sum*100) + ' %</td></tr>').join('');
   $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' Spülgänge in ' + c.L + ' Monaten · ' +
     r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je Spülgang · ' +
-    Math.round(r.kartN*10)/10 + ' Filterkartuschen · Miete inkl. ' + Math.round(c.zuschlag*1000)/10 + ' % Zuschlag für Kostensicherheit.';
+    Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') +
+    ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ' · Miete inkl. ' + Math.round(c.zuschlag*1000)/10 + ' % Zuschlag für Kostensicherheit.';
 
   drawChart(c, r);
   buildMail(c, r);
@@ -594,7 +654,7 @@ function renderAdmin(){
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td style="padding:5px 8px 5px 0"><input type="text" data-i="' + i + '" data-k="name" value="" style="width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>' +
-      ['geraet','tank','boiler','schutz','wg'].map(k =>
+      ['geraet','wasser','schutz','wg'].map(k =>
         '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + m[k] + '" style="width:100%;min-width:84px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>').join('') +
       '<td style="padding:5px 0 5px 8px"><button type="button" data-del="' + i + '" title="Modell löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = m.name;
@@ -615,9 +675,26 @@ function renderAdmin(){
     CONFIG.models.splice(i, 1);
     saveLocal(); buildSelect(); loadModelFields(); renderAdmin(); calc();
   });
-  $('aFilter').value = CONFIG.prices.filter;
-  $('aIq').value = CONFIG.prices.iq;
-  $('aKart').value = CONFIG.prices.kart;
+  const wtb = document.querySelector('#waterTable tbody');
+  wtb.innerHTML = '';
+  CONFIG.water.forEach((w, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="padding:5px 8px 5px 0"><input type="text" data-i="' + i + '" data-k="name" value="" style="width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>' +
+      ['aktion','liste','wechsel','kap'].map(k =>
+        '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + w[k] + '" style="width:100%;min-width:84px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>').join('');
+    tr.querySelector('input[data-k="name"]').value = w.name;
+    wtb.appendChild(tr);
+  });
+  wtb.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+    const i = +inp.dataset.i, k = inp.dataset.k;
+    CONFIG.water[i][k] = k === 'name' ? inp.value : (+inp.value || 0);
+    saveLocal();
+    buildWaterSelect($('waterSel').value);
+    calc();
+  });
+  $('aIqA').value = CONFIG.iqMeter.aktion;
+  $('aIqL').value = CONFIG.iqMeter.liste;
   $('aRein').value = CONFIG.prices.rein;
   $('aTrock').value = CONFIG.prices.trock;
   $('aZuschlag').value = CONFIG.zuschlag;
@@ -629,7 +706,7 @@ function renderAdmin(){
 }
 
 function bindAdminGlobals(){
-  const map = {aFilter:['prices','filter'], aIq:['prices','iq'], aKart:['prices','kart'], aRein:['prices','rein'], aTrock:['prices','trock'],
+  const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'], aRein:['prices','rein'], aTrock:['prices','trock'],
                aZuschlag:['zuschlag'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
@@ -661,7 +738,7 @@ $('btnAdminOff').onclick = () => setAdmin(false);
 
 $('btnAddModel').onclick = () => {
   const id = 'm' + Date.now().toString(36);
-  CONFIG.models.push({id, name:'Neues Modell', geraet:2000, tank:10, boiler:3, schutz:399, wg:24});
+  CONFIG.models.push({id, name:'Neues Modell', geraet:2000, wasser:4, schutz:399, wg:24});
   saveLocal(); buildSelect(sel.value); renderAdmin(); calc();
 };
 
@@ -702,9 +779,10 @@ function applyHash(){
   const get = k => +p.get(k);
   if (p.has('m') && [...sel.options].some(o => o.value === p.get('m'))) sel.value = p.get('m');
   loadModelFields();
+  if (p.has('wo') && [...$('waterSel').options].some(o => o.value === p.get('wo'))) $('waterSel').value = p.get('wo');
+  if (p.get('pb') === 'liste') $('preisbasis').value = 'liste';
   if (p.has('g')) $('pGeraet').value = get('g');
-  if (p.has('t')) $('pTank').value = get('t');
-  if (p.has('b')) $('pBoiler').value = get('b');
+  if (p.has('wa')) $('pWasser').value = get('wa');
   if (p.has('s')) $('pSchutz').value = get('s');
   if (p.has('d')) $('days').value = get('d');
   if (p.has('w')) $('wg').value = get('w');
@@ -723,7 +801,9 @@ document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
 $('tabDirekt').onclick = () => setMode('direkt');
 $('tabSchaetz').onclick = () => setMode('schaetz');
 sel.onchange = () => { loadModelFields(); calc(); };
-['pGeraet','pTank','pBoiler','pSchutz','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
+$('waterSel').onchange = calc;
+$('preisbasis').onchange = calc;
+['pGeraet','pWasser','pSchutz','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
 $('runtime').onchange = calc;
 $('btnShare').onclick = () => {
   const url = shareUrl(currentConfig());
@@ -756,8 +836,8 @@ function vertragHtml(c, r, k){
   rows('Mieter', (k.firma||'____________________')+'<br>vertreten durch: '+(k.name||'____________________')+'<br>'+(k.adresse||'____________________'))+'</table>'+
   '<h2>2. Mietgegenstand und Leistungsumfang</h2>'+
   '<table>'+rows('Ger\u00e4t', c.name)+
-  rows('Inkludiertes Zubeh\u00f6r','Wasserfilter Brita Purity 1200 Clean, iQ Meter')+
-  rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial (Sp\u00fclmittel, Glanztrockner, Filterkartuschen), Rundumschutz, Wartung inkl. Filtertausch, Technikereinsatz Mo\u2013Fr')+
+  rows('Inkludiertes Zubeh\u00f6r','Wasseraufbereitung '+c.waterName+(c.iq > 0 ? ', iQ Meter' : ''))+
+  rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+'), Rundumschutz, Wartung inkl. Filtertausch, Technikereinsatz Mo\u2013Fr')+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
   '<table>'+rows('Mietdauer', monate+' Monate ab betriebsfertiger \u00dcbergabe')+
@@ -798,6 +878,7 @@ if ('IntersectionObserver' in window && ergebnisSec){
 function start(){
   bindAdminGlobals();
   buildSelect();
+  buildWaterSelect();
   if (location.hash.length > 1) applyHash(); else loadModelFields();
   if (mode === 'schaetz') setMode('schaetz'); else calc();
 }
