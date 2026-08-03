@@ -274,6 +274,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <th style="padding:6px 8px;font-weight:500">Wechsel €</th>
           <th style="padding:6px 8px;font-weight:500">Kapazität l (10 °dH)</th>
           <th style="padding:6px 8px;font-weight:500">iQ Meter</th>
+          <th style="padding:6px 8px;font-weight:500">Auswahlhilfe (Hinweistext)</th>
           <th></th>
         </tr>
       </thead>
@@ -299,6 +300,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aEnd">Endzahlung Übernahme (€)</label><input type="number" id="aEnd" min="0" step="10"></div>
     <div><label for="aKwh">Strom je Spülgang (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
+    <div style="grid-column:1/-1"><label for="aAktion">Aktionshinweis (unter der Auswahl, leer = kein Hinweis)</label><input type="text" id="aAktion" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aEmail">Anfrage-E-Mail</label><input type="text" id="aEmail" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aPin">Admin-PIN</label><input type="text" id="aPin" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
   </div>
@@ -406,11 +408,12 @@ const FACTORY = {
     {id:'o80', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, schutz:499, wg:40}
   ],
   water: [
-    {id:'c1100', name:'C1100 Clean', aktion:395, liste:395, wechsel:204, kap:9000, iq:true},
-    {id:'c1100x', name:'C1100 Clean Extra', aktion:395, liste:395, wechsel:204, kap:9000, iq:true},
-    {id:'osmose', name:'Osmose ohne Tank', aktion:1600, liste:2160, wechsel:305, kap:0, iq:false}
+    {id:'c1100', name:'C1100 Clean', aktion:395, liste:395, wechsel:204, kap:9000, iq:true, tipp:'C1100 Clean: normales Spülergebnis, reduziert Chemie und verhindert Korrosion.'},
+    {id:'c1100x', name:'C1100 Clean Extra', aktion:395, liste:395, wechsel:204, kap:9000, iq:true, tipp:'C1100 Clean Extra: für polierfreie Gläser, z. B. Weingläser.'},
+    {id:'osmose', name:'Osmose ohne Tank', aktion:1600, liste:2160, wechsel:305, kap:0, iq:false, tipp:'Osmose: für das perfekte Ergebnis oder sehr schlechtes Wasser · härteunabhängig, iQ Meter entfällt.'}
   ],
   iqMeter: {aktion:115, liste:164},
+  aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   prices: {rein:92, trock:96},
   reinWg: 4000, trockWg: 40000,
   zuschlag: 15, end: 240, kwh: 0, strom: 0.25,
@@ -438,7 +441,7 @@ function mergeConfig(base, over){
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
   if (over.prices) Object.keys(out.prices).forEach(k => { if (typeof over.prices[k] === 'number') out.prices[k] = over.prices[k]; });
   ['zuschlag','end','kwh','strom','reinWg','trockWg'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
-  ['email','pin'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  ['email','pin','aktionsHinweis'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
@@ -608,12 +611,7 @@ function calc(){
   $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' + c.L + ' Monate';
   $('incGeraet').textContent = 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '');
   $('incVerbrauch').textContent = c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen';
-  const waterTips = {
-    c1100:  'C1100 Clean: normales Spülergebnis, reduziert Chemie und verhindert Korrosion.',
-    c1100x: 'C1100 Clean Extra: für polierfreie Gläser, z. B. Weingläser.',
-    osmose: 'Osmose: für das perfekte Ergebnis oder sehr schlechtes Wasser · härteunabhängig, iQ Meter entfällt.'
-  };
-  $('waterHint').textContent = (waterTips[c.waterId] || '') + ' Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.';
+  $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
 
   $('kInvest').textContent = eur.format(r.invest);
@@ -643,7 +641,7 @@ function calc(){
   $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' Spülgänge in ' + c.L + ' Monaten · ' +
     r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je Spülgang · ' +
     Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') +
-    ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ' · Miete inkl. ' + Math.round(c.zuschlag*1000)/10 + ' % Zuschlag für Kostensicherheit.';
+    ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.';
 
   drawChart(c, r);
   buildMail(c, r);
@@ -689,13 +687,15 @@ function renderAdmin(){
       ['aktion','liste','wechsel','kap'].map(k =>
         '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + w[k] + '" style="width:100%;min-width:84px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>').join('') +
       '<td style="padding:5px 8px;text-align:center"><input type="checkbox" data-i="' + i + '" data-k="iq"' + (w.iq ? ' checked' : '') + ' style="width:20px;height:20px;accent-color:var(--magenta)"></td>' +
+      '<td style="padding:5px 8px"><input type="text" data-i="' + i + '" data-k="tipp" value="" style="width:100%;min-width:220px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px"></td>' +
       '<td style="padding:5px 0 5px 8px"><button type="button" data-wdel="' + i + '" title="Option löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = w.name;
+    tr.querySelector('input[data-k="tipp"]').value = w.tipp || '';
     wtb.appendChild(tr);
   });
   wtb.querySelectorAll('input').forEach(inp => inp.oninput = () => {
     const i = +inp.dataset.i, k = inp.dataset.k;
-    CONFIG.water[i][k] = k === 'name' ? inp.value : (k === 'iq' ? inp.checked : (+inp.value || 0));
+    CONFIG.water[i][k] = (k === 'name' || k === 'tipp') ? inp.value : (k === 'iq' ? inp.checked : (+inp.value || 0));
     saveLocal();
     buildWaterSelect($('waterSel').value);
     calc();
@@ -717,6 +717,7 @@ function renderAdmin(){
   $('aEnd').value = CONFIG.end;
   $('aKwh').value = CONFIG.kwh;
   $('aStrom').value = CONFIG.strom;
+  $('aAktion').value = CONFIG.aktionsHinweis || '';
   $('aEmail').value = CONFIG.email;
   $('aPin').value = CONFIG.pin;
 }
@@ -724,11 +725,11 @@ function renderAdmin(){
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'], aRein:['prices','rein'], aTrock:['prices','trock'],
                aReinWg:['reinWg'], aTrockWg:['trockWg'],
-               aZuschlag:['zuschlag'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin']};
+               aZuschlag:['zuschlag'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
-      const val = (path[0] === 'email' || path[0] === 'pin') ? raw : (+raw || 0);
+      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis') ? raw : (+raw || 0);
       if (path.length === 2) CONFIG[path[0]][path[1]] = val; else CONFIG[path[0]] = val;
       saveLocal(); calc();
     };
