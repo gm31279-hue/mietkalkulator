@@ -37,7 +37,7 @@ header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0
 .g3{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
 label{font-size:13px;color:var(--grey);display:block;margin-bottom:5px}
-select,input[type=number]{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px;background:#fff;color:var(--ink)}
+select,input[type=number],#leadPanel input{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px;background:#fff;color:var(--ink)}
 select:focus,input:focus{outline:2px solid var(--magenta);outline-offset:1px;border-color:var(--magenta)}
 .srow{display:grid;grid-template-columns:190px 1fr 84px;align-items:center;gap:14px;padding:8px 0}
 .srow label{margin:0}
@@ -359,6 +359,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
     <div style="grid-column:1/-1"><label for="aAktion">Aktionshinweis (unter der Auswahl, leer = kein Hinweis)</label><input type="text" id="aAktion" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aAgb">AGB-Link (URL)</label><input type="text" id="aAgb" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
+    <div><label for="aLeadBonus">Leadmagnet-Gutschein (Text)</label><input type="text" id="aLeadBonus" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aEmail">Anfrage-E-Mail</label><input type="text" id="aEmail" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aPin">Admin-PIN</label><input type="text" id="aPin" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
   </div>
@@ -428,8 +429,24 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <p class="note" id="varNote"></p>
     </div>
 
+    <div class="panel" id="leadPanel" style="margin-top:22px;border:2px solid var(--magenta);background:var(--magenta-tint)">
+      <h2>Nimm deine Kalkulation mit</h2>
+      <p style="font-size:15px;margin-bottom:4px"><b>Hol dir deine persönliche Kalkulation als PDF</b> – plus Gutschein: <b id="leadBonusTxt">Kostenlose Wasseranalyse und Bedarfscheck vor Ort</b>.</p>
+      <p class="hint" style="margin-bottom:14px">Wir prüfen deine Zahlen mit echten Wasserwerten und du bekommst ein verbindliches Angebot – ohne Verpflichtung.</p>
+      <div class="grid g4">
+        <div><label for="lFirma">Betrieb</label><input type="text" id="lFirma" placeholder="Gasthaus Muster"></div>
+        <div><label for="lName">Dein Name</label><input type="text" id="lName" placeholder="Max Muster"></div>
+        <div><label for="lMail">E-Mail</label><input type="email" id="lMail" placeholder="max@betrieb.at"></div>
+        <div><label for="lTel">Telefon (optional)</label><input type="tel" id="lTel" placeholder="+43 …"></div>
+      </div>
+      <div class="cta" style="margin:16px 0 0">
+        <button class="btn" type="button" id="btnLead">Kalkulation als PDF + Gratis-Termin sichern</button>
+        <p class="mock">Mit dem Absenden stimmst du zu, dass wir dich einmalig zur Terminvereinbarung kontaktieren. Keine Werbung, kein Newsletter.</p>
+      </div>
+    </div>
+
     <div class="cta">
-      <a class="btn" id="btnMail" href="#">Angebot anfordern</a>
+      <a class="btn ghost" id="btnMail" href="#">Angebot anfordern</a>
       <button class="btn ghost" type="button" id="btnVertrag">Mietvertrag erstellen</button>
       <button class="btn ghost" type="button" id="btnShare">Kalkulation teilen</button>
       <button class="btn ghost" type="button" onclick="window.print()">Zusammenfassung drucken</button>
@@ -509,6 +526,7 @@ const FACTORY = {
      Übernahme nach Vertragsende: immer eine Monatsrate (laufzeitabhängig), kein Fixbetrag */
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
+  leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
@@ -534,7 +552,7 @@ function mergeConfig(base, over){
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
   ['zuschlag','zuschlagFlat','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
-  ['email','pin','aktionsHinweis','agbUrl'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  ['email','pin','aktionsHinweis','agbUrl','leadBonus'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
@@ -765,6 +783,7 @@ function calc(){
     : (c.posten.length ? 'Sämtliches Verbrauchsmaterial' : 'Verbrauch lt. Vereinbarung');
   $('incSchutz').textContent = c.schutz > 0 ? 'Rundumschutz + Wartung' : 'Wartung + Technikereinsatz (Rundumschutz ab ' + eur.format(schutzMax()) + ' Listenpreis nicht verfügbar)';
   $('schutzInfo').textContent = c.schutz > 0 ? 'Rundumschutz automatisch: ' + eur.format(c.schutz) + ' (Staffel)' : 'Rundumschutz entfällt (Listenpreis über ' + eur.format(schutzMax()) + ')';
+  $('leadBonusTxt').textContent = CONFIG.leadBonus || 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort';
   if (c.hatWasser) $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = c.flat
     ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
@@ -981,17 +1000,18 @@ function renderAdmin(){
   $('aStrom').value = CONFIG.strom;
   $('aAktion').value = CONFIG.aktionsHinweis || '';
   $('aAgb').value = CONFIG.agbUrl || '';
+  $('aLeadBonus').value = CONFIG.leadBonus || '';
   $('aEmail').value = CONFIG.email;
   $('aPin').value = CONFIG.pin;
 }
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
-      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis' || path[0] === 'agbUrl') ? raw : (+raw || 0);
+      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis' || path[0] === 'agbUrl' || path[0] === 'leadBonus') ? raw : (+raw || 0);
       if (path[0] === 'agbUrl') $('agbLink').href = raw || '#';
       if (path.length === 2) CONFIG[path[0]][path[1]] = val; else CONFIG[path[0]] = val;
       saveLocal(); calc();
@@ -1187,6 +1207,71 @@ function vertragHtml(c, r, k){
   '<p class="hinweis">Vertragsentwurf, erstellt mit dem St\u00f6lner Gastrotechnik-Mietkalkulator am '+heute+'. Dieser Entwurf ersetzt keine Rechtsberatung und wird erst mit beidseitiger Unterschrift der gepr\u00fcften Endfassung wirksam.</p>'+
   '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
 }
+/* ===== Leadmagnet: persönliche Kalkulation als PDF + Gratis-Termin ===== */
+function leadReportHtml(c, r, lead){
+  const heute = new Date().toLocaleDateString('de-AT');
+  const headerImg = document.querySelector('header img');
+  const logoSrc = headerImg ? headerImg.src : '';
+  const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
+  const vars = [12,24,36,48,60].map(L => ({L, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
+  const flat = compute(Object.assign({}, c, {L:60, zuschlag: flatZ}));
+  const rows = (t,v) => '<tr><td>'+t+'</td><td>'+v+'</td></tr>';
+  return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Mietkalkulation '+(lead.firma||c.name)+'</title><style>'+
+  'body{font-family:Arial,Helvetica,sans-serif;color:#191919;max-width:720px;margin:36px auto;line-height:1.55;font-size:13.5px;padding:0 20px}'+
+  'h1{font-size:22px;color:#E3007A;margin-bottom:2px}h2{font-size:14px;margin:20px 0 6px;page-break-after:avoid}'+
+  '.kopf{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #E3007A;padding-bottom:10px;margin-bottom:18px;page-break-inside:avoid}'+
+  '.kopf .adr{font-size:11px;color:#666;text-align:right}'+
+  'table{width:100%;border-collapse:collapse;margin:8px 0;page-break-inside:avoid}td,th{padding:5px 8px;border:1px solid #ddd;vertical-align:top;text-align:left}td:first-child{color:#555}'+
+  '.rate{font-size:30px;font-weight:bold;color:#E3007A;margin:6px 0 0}'+
+  '.gutschein{border:2px dashed #E3007A;border-radius:12px;padding:14px 18px;margin-top:22px;page-break-inside:avoid}'+
+  '.gutschein b{color:#E3007A}'+
+  '.hinweis{font-size:11px;color:#888;margin-top:26px;border-top:1px solid #ddd;padding-top:8px;page-break-inside:avoid}'+
+  'p{orphans:3;widows:3}@media print{body{margin:8mm auto}}'+
+  '</style></head><body>'+
+  '<div class="kopf"><div><h1>Deine Mietkalkulation</h1><div style="font-size:12px;color:#555">'+(lead.firma ? lead.firma+' · ' : '')+(lead.name ? lead.name+' · ' : '')+'erstellt am '+heute+'</div></div>'+
+  '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="Stölner" style="height:38px;margin-bottom:8px">' : '<b>Stölner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstraße 9, A-3100 St. Pölten</div></div>'+
+  '<p class="rate">'+eur2.format(r.rate)+' / Monat</p>'+
+  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
+  '<h2>Deine Konfiguration</h2>'+
+  '<table>'+rows('Gerät', c.name)+
+  (c.hatWasser ? rows('Wasseraufbereitung', c.waterName+(c.iq > 0 ? ' + iQ Meter' : '')) : '')+
+  rows('Betrieb', c.days+' Tage/Woche · '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ' · '+c.dh+' °dH' : ''))+
+  rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+', Verbrauchsmaterial, '+(c.schutz > 0 ? 'Rundumschutz, ' : '')+'Wartung, Techniker Mo–Fr')+
+  rows('Nach Vertragsende', 'Rücknahme kostenlos oder Übernahme um eine Monatsrate')+'</table>'+
+  '<h2>Alle Laufzeiten im Überblick</h2>'+
+  '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+'<th>Flatrate</th></tr>'+
+  '<tr><td>Miete je Monat</td>'+vars.map(v => '<td><b>'+eur2.format(v.r.rate)+'</b></td>').join('')+'<td><b>'+eur2.format(flat.rate)+'</b></td></tr>'+
+  '<tr><td>Kauf gesamt (Vergleich)</td>'+vars.map(v => '<td>'+eur.format(v.r.total)+'</td>').join('')+'<td>–</td></tr>'+
+  '<tr><td>Miete je '+c.einheit+'</td>'+vars.map(v => '<td>'+ct(v.r.rate*v.L/v.r.wgTotal + v.r.neben)+'</td>').join('')+'<td>'+ct(flat.rate*60/flat.wgTotal + flat.neben)+'</td></tr></table>'+
+  '<div class="gutschein"><b>Dein Gutschein: '+(CONFIG.leadBonus || 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort')+'</b><br>'+
+  'Wir kommen unverbindlich vorbei, messen deine Wasserwerte und bestätigen dir deine Rate verbindlich. Einfach auf die E-Mail antworten oder anrufen – wir melden uns in den nächsten Tagen bei dir.</div>'+
+  '<p class="hinweis">Beispielrechnung vorbehaltlich Wasseranalyse vor Ort. Es gelten die AGB der Stölner Ges.m.b.H.'+(CONFIG.agbUrl ? ' ('+CONFIG.agbUrl.replace('https://','')+')' : '')+'. Erstellt mit dem Stölner Gastrotechnik-Mietkalkulator am '+heute+'.</p>'+
+  '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
+}
+
+$('btnLead').onclick = () => {
+  const lead = {firma: $('lFirma').value.trim(), name: $('lName').value.trim(), mail: $('lMail').value.trim(), tel: $('lTel').value.trim()};
+  if (!lead.mail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.mail)){ alert('Bitte gib eine gültige E-Mail-Adresse an – dorthin schicken wir die Terminbestätigung.'); $('lMail').focus(); return; }
+  if (!lead.firma && !lead.name){ alert('Bitte gib zumindest deinen Namen oder Betrieb an.'); $('lFirma').focus(); return; }
+  const c = currentConfig(); const r = compute(c);
+  const w = window.open('', '_blank');
+  if (!w){ alert('Bitte Pop-ups für diese Seite erlauben.'); return; }
+  w.document.write(leadReportHtml(c, r, lead));
+  w.document.close();
+  /* Lead an Stölner: vorbefüllte Mail – ein Klick auf Senden sichert den Gratis-Termin */
+  const body = ['Neuer Lead aus dem Mietkalkulator:','',
+    'Betrieb: ' + (lead.firma || '–'),
+    'Name: ' + (lead.name || '–'),
+    'E-Mail: ' + lead.mail,
+    'Telefon: ' + (lead.tel || '–'),'',
+    'Gerät: ' + c.name,
+    (c.hatWasser ? 'Wasseraufbereitung: ' + c.waterName : ''),
+    'Rate: ' + eur2.format(r.rate) + ' / Monat (' + (c.flat ? 'Flatrate' : c.L + ' Monate') + ')','',
+    'Kalkulation: ' + shareUrl(c),'',
+    'Bitte um Terminvereinbarung: ' + (CONFIG.leadBonus || 'Wasseranalyse und Bedarfscheck vor Ort')].filter(x => x !== '').join('\r\n');
+  location.href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Gratis-Termin Mietkalkulator: ' + (lead.firma || lead.name)) + '&body=' + encodeURIComponent(body);
+};
+
 $('btnVertrag').onclick = () => {
   $('vertragDlg').showModal();
   $('vIban').oninput = () => {
