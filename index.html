@@ -1145,7 +1145,13 @@ function vertragHtml(c, r, k){
   'table{width:100%;border-collapse:collapse;margin:8px 0}td{padding:5px 8px;border:1px solid #ddd;vertical-align:top}td:first-child{width:42%;color:#555}'+
   '.sig{display:flex;gap:40px;margin-top:46px}.sig div{flex:1}.sig .line{border-top:1px solid #191919;padding-top:5px;font-size:12px;color:#555;margin-top:44px}'+
   '.hinweis{font-size:11px;color:#888;margin-top:26px;border-top:1px solid #ddd;padding-top:8px}'+
-  '@media print{body{margin:10mm auto}}'+
+  /* Druck: saubere Seitenumbrüche – Überschriften nie allein am Seitenende, Tabellen/Unterschriften nie zerteilt, SEPA-Mandat auf eigener Seite */
+  'h2{page-break-after:avoid;break-after:avoid}'+
+  'table,.sig,.kopf{page-break-inside:avoid;break-inside:avoid}'+
+  'h2+p,h2+table{page-break-before:avoid}'+
+  'p{orphans:3;widows:3}'+
+  '.sepaSeite{page-break-before:always;break-before:page}'+
+  '@media print{body{margin:8mm auto}.hinweis{page-break-inside:avoid}}'+
   '</style></head><body>'+
   '<div class="kopf"><div><h1>Mietvertrag</h1><div style="font-size:12px;color:#555">Vertragsnummer: '+vnr+' &middot; Datum: '+heute+'</div></div>'+
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="St\u00f6lner" style="height:38px;margin-bottom:8px">' : '<b>St\u00f6lner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
@@ -1168,7 +1174,7 @@ function vertragHtml(c, r, k){
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>6. Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
-  '<h2>7. SEPA-Lastschriftmandat</h2>'+
+  '<h2 class="sepaSeite">7. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
   rows('IBAN', ibanFmt(k.iban) || blank)+
