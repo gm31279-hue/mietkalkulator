@@ -191,6 +191,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="grid g4" id="geraeteFelder" hidden style="margin-top:10px">
       <div><label for="pGeraet">Listenpreis Gerät (€)</label><input type="number" id="pGeraet" min="0" step="10"></div>
       <div><label for="pWasser" id="pWasserLabel">Wasser je Spülgang (l)</label><input type="number" id="pWasser" min="0" step="0.1"></div>
+      <div><label for="pWartung">Wartung (€/Jahr)</label><input type="number" id="pWartung" min="0" step="10"></div>
       <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px" id="schutzInfo">Rundumschutz: automatisch nach Staffel</div>
     </div>
   </section>
@@ -293,6 +294,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <th style="padding:6px 8px;font-weight:500">Kategorie</th>
           <th style="padding:6px 8px;font-weight:500">Preis €</th>
           <th style="padding:6px 8px;font-weight:500">Wasser l/Einheit</th>
+          <th style="padding:6px 8px;font-weight:500">Wartung €/Jahr</th>
           <th style="padding:6px 8px;font-weight:500">Einheiten/Tag</th>
           <th></th>
         </tr>
@@ -482,11 +484,12 @@ const FACTORY = {
     {id:'eis', name:'Eismaschinen · Daten bitte einpflegen', einheit:'kg Eis', plural:'kg Eis', wasser:false, schaetz:false, posten:[]},
     {id:'softeis', name:'Softeismaschinen · Daten bitte einpflegen', einheit:'Portion', plural:'Portionen', wasser:false, schaetz:false, posten:[]}
   ],
+  /* wartung = Wartungsaufgaben in €/Jahr je Modell (fließt in Kauf und Miete ein; 0 = keine separaten Wartungskosten) */
   models: [
-    {id:'o31', kat:'spueler', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, wg:24},
-    {id:'o41', kat:'spueler', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, wg:30},
-    {id:'o61', kat:'spueler', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, wg:18},
-    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, wg:40}
+    {id:'o31', kat:'spueler', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, wartung:0, wg:24},
+    {id:'o41', kat:'spueler', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, wartung:0, wg:30},
+    {id:'o61', kat:'spueler', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, wartung:0, wg:18},
+    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, wartung:0, wg:40}
   ],
   /* Rundumschutz-Staffel nach netto Listenpreis – über der höchsten Stufe entfällt der Rundumschutz */
   schutzStaffel: [
@@ -587,6 +590,7 @@ function loadModelFields(){
   const m = selectedModel();
   $('pGeraet').value = m.geraet;
   $('pWasser').value = m.wasser;
+  $('pWartung').value = m.wartung || 0;
   $('wg').value = m.wg;
 }
 
@@ -630,6 +634,7 @@ function currentConfig(){
     wasser: +$('pWasser').value || 0,
     /* Rundumschutz automatisch nach Staffel (netto Listenpreis) */
     schutz: schutzFor(+$('pGeraet').value || 0),
+    wartung: +$('pWartung').value || 0,
     days, wg,
     dh: +$('dh').value, wp: +$('wp').value,
     /* Flatrate: keine Mindestlaufzeit – Rate wie Beispielrechnung laufzeitunabhängig auf 60 Monate amortisiert */
@@ -655,12 +660,14 @@ function compute(c){
   const invest = c.geraet + c.filter + c.iq + schutzL;
   /* Verbrauchspositionen der Kategorie: Kosten = Einheiten gesamt ÷ Einheiten je Gebinde × Preis je Gebinde */
   const postenKosten = c.posten.reduce((s, p) => s + wgTotal / p.je * p.preis, 0);
-  const lauf = kartN * c.kart + postenKosten;
+  /* Wartungsaufgaben: €/Jahr × Laufzeit in Jahren */
+  const wartungK = (c.wartung || 0) * c.L / 12;
+  const lauf = kartN * c.kart + postenKosten + wartungK;
   const total = invest + lauf;
   const rate = total / c.L * (1 + c.zuschlag);
   const waterPerWash = litersPerWash/1000 * c.wp;
   const stromPerWash = c.kwh * c.strom;
-  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, total, rate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
+  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
 }
 
 function drawChart(c, r){
@@ -704,7 +711,7 @@ function drawChart(c, r){
 }
 
 function shareUrl(c){
-  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
+  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, wt:c.wartung, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
   return location.origin + location.pathname + '#' + p.toString();
 }
 
@@ -774,7 +781,7 @@ function calc(){
   const comp = [{k:'geraet', label:'Gerät (Laufzeit-Anteil)', v:c.geraet/r.wgTotal}];
   if (c.hatWasser) comp.push({k:'wasserauf', label:'Wasseraufbereitung (' + c.waterName + (c.osmose ? ', Membrantausch)' : ', iQ, Kartuschen)'), v:(c.filter + c.iq + r.kartN*c.kart)/r.wgTotal});
   if (r.postenKosten > 0) comp.push({k:'chemie', label:'Verbrauchsmaterial (' + c.posten.map(p => p.name.split(' ')[0]).join(', ') + ')', v:r.postenKosten/r.wgTotal});
-  if (r.schutzL > 0) comp.push({k:'schutz', label:'Rundumschutz + Wartung', v:r.schutzL/r.wgTotal});
+  if (r.schutzL + r.wartungK > 0) comp.push({k:'schutz', label:'Rundumschutz + Wartung', v:(r.schutzL + r.wartungK)/r.wgTotal});
   if (r.waterPerWash > 0) comp.push({k:'wasser', label:'Frisch- und Abwasser', v:r.waterPerWash});
   if (r.stromPerWash > 0) comp.push({k:'strom', label:'Strom', v:r.stromPerWash});
   const sum = comp.reduce((s,x) => s + x.v, 0);
@@ -896,8 +903,8 @@ function renderAdmin(){
     tr.innerHTML =
       '<td style="padding:5px 8px 5px 0"><input type="text" data-i="' + i + '" data-k="name" value="" style="' + inpStyle + '"></td>' +
       '<td style="padding:5px 8px"><select data-i="' + i + '" data-k="kat" style="' + inpStyle + ';min-width:150px">' + katOpts + '</select></td>' +
-      ['geraet','wasser','wg'].map(k =>
-        '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + m[k] + '" style="' + inpStyle + ';min-width:84px"></td>').join('') +
+      ['geraet','wasser','wartung','wg'].map(k =>
+        '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + (m[k] || 0) + '" style="' + inpStyle + ';min-width:84px"></td>').join('') +
       '<td style="padding:5px 0 5px 8px"><button type="button" data-del="' + i + '" title="Modell löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = m.name;
     tb.appendChild(tr);
@@ -1009,7 +1016,7 @@ $('btnAdminOff').onclick = () => setAdmin(false);
 $('btnAddModel').onclick = () => {
   const id = 'm' + Date.now().toString(36);
   const kat = selectedKat();
-  CONFIG.models.push({id, kat:kat.id, name:'Neues Modell', geraet:2000, wasser:kat.wasser ? 4 : 0, wg:24});
+  CONFIG.models.push({id, kat:kat.id, name:'Neues Modell', geraet:2000, wasser:kat.wasser ? 4 : 0, wartung:0, wg:24});
   saveLocal(); buildSelect(sel.value); renderAdmin(); calc();
 };
 
@@ -1072,6 +1079,7 @@ function applyHash(){
   if (p.get('pb') === 'liste') $('preisbasis').value = 'liste';
   if (p.has('g')) $('pGeraet').value = get('g');
   if (p.has('wa')) $('pWasser').value = get('wa');
+  if (p.has('wt')) $('pWartung').value = get('wt');
   if (p.has('d')) $('days').value = get('d');
   if (p.has('w')) $('wg').value = get('w');
   if (p.has('h')) $('dh').value = get('h');
@@ -1092,7 +1100,7 @@ sel.onchange = () => { loadModelFields(); calc(); };
 $('katSel').onchange = () => { buildSelect(); loadModelFields(); calc(); };
 $('waterSel').onchange = calc;
 $('preisbasis').onchange = calc;
-['pGeraet','pWasser','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
+['pGeraet','pWasser','pWartung','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
 $('runtime').onchange = calc;
 $('btnShare').onclick = () => {
   const url = shareUrl(currentConfig());
