@@ -351,7 +351,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incGeraet">Gerät, Wasseraufbereitung, iQ Meter</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incVerbrauch">Spülmittel, Trockner, Kartuschen</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Rundumschutz + Wartung</td><td></td></tr>
-          <tr><td class="inc">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
+          <tr><td class="inc" id="mTotalLabel">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
         </table>
         <p class="note" id="endNote">Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um 240 €.</p>
@@ -402,6 +402,10 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="vFirma">Firma / Betrieb</label><input type="text" id="vFirma" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px" placeholder="Gasthaus Muster GmbH"></div>
     <div><label for="vName">Vertretungsbefugte Person</label><input type="text" id="vName" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px" placeholder="Max Muster"></div>
     <div><label for="vAdresse">Anschrift (Aufstellungsort)</label><input type="text" id="vAdresse" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px" placeholder="Musterstraße 1, 3100 St. Pölten"></div>
+    <p class="hint" style="margin:2px 0 0"><b>SEPA-Einzug</b> – wird als Lastschriftmandat in den Vertrag übernommen (Felder leer lassen = zum händischen Ausfüllen)</p>
+    <div><label for="vKonto">Kontoinhaber</label><input type="text" id="vKonto" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px" placeholder="wie Firma / Betrieb"></div>
+    <div><label for="vIban">IBAN</label><input type="text" id="vIban" autocomplete="off" spellcheck="false" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px;letter-spacing:.04em" placeholder="AT00 0000 0000 0000 0000"></div>
+    <div><label for="vBic">BIC (optional)</label><input type="text" id="vBic" autocomplete="off" spellcheck="false" style="width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px" placeholder="XXXXATWW"></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
     <button type="button" class="btn ghost" id="vAbbrechen" style="padding:11px 20px;font-size:14px">Abbrechen</button>
@@ -648,6 +652,7 @@ function calc(){
   $('kWg').textContent = ct(r.total/r.wgTotal + r.neben);
   $('rate').textContent = eur2.format(r.rate);
   $('stickyVal').textContent = eur2.format(r.rate);
+  $('mTotalLabel').textContent = c.flat ? 'Vergleichswert über 5 Jahre (unbefristet)' : 'Gesamt ' + (c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mTotal').innerHTML = '<b>' + eur.format(r.rate * c.L) + '</b>';
   $('mWg').textContent = ct(r.rate*c.L/r.wgTotal + r.neben);
 
@@ -886,11 +891,25 @@ $('btnShare').onclick = () => {
   } else prompt('Link kopieren:', url);
 };
 
+/* IBAN: Normalisierung, Mod-97-Prüfung, 4er-Gruppierung */
+function ibanNorm(s){ return (s||'').replace(/\s+/g,'').toUpperCase(); }
+function ibanOk(s){
+  const i = ibanNorm(s);
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(i)) return false;
+  const re = i.slice(4) + i.slice(0,4);
+  let rem = 0;
+  for (const ch of re) rem = (rem * (ch >= 'A' ? 100 : 10) + parseInt(ch, 36)) % 97;
+  return rem === 1;
+}
+function ibanFmt(s){ const i = ibanNorm(s); return i ? i.replace(/(.{4})/g,'$1 ').trim() : ''; }
+
 function vertragHtml(c, r, k){
   const heute = new Date().toLocaleDateString('de-AT');
   const netto = eur2.format(r.rate);
   const ende = eur.format(c.end);
   const monate = c.L;
+  const vnr = 'SPK-' + Date.now().toString(36).toUpperCase();
+  const blank = '____________________';
   const rows = (t,v) => '<tr><td>'+t+'</td><td>'+v+'</td></tr>';
   return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Mietvertrag ' + c.name + '</title><style>'+
   'body{font-family:Arial,Helvetica,sans-serif;color:#191919;max-width:720px;margin:36px auto;line-height:1.55;font-size:13.5px;padding:0 20px}'+
@@ -902,7 +921,7 @@ function vertragHtml(c, r, k){
   '.hinweis{font-size:11px;color:#888;margin-top:26px;border-top:1px solid #ddd;padding-top:8px}'+
   '@media print{body{margin:10mm auto}}'+
   '</style></head><body>'+
-  '<div class="kopf"><div><h1>Mietvertrag</h1><div style="font-size:12px;color:#555">Vertragsnummer: SPK-'+Date.now().toString(36).toUpperCase()+' &middot; Datum: '+heute+'</div></div>'+
+  '<div class="kopf"><div><h1>Mietvertrag</h1><div style="font-size:12px;color:#555">Vertragsnummer: '+vnr+' &middot; Datum: '+heute+'</div></div>'+
   '<div class="adr"><b>St\u00f6lner Ges.m.b.H.</b><br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
   '<h2>1. Vertragsparteien</h2>'+
   '<table>'+rows('Vermieterin','St\u00f6lner Ges.m.b.H., Burggasse 120, A-1070 Wien')+
@@ -923,15 +942,34 @@ function vertragHtml(c, r, k){
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>6. Sonstiges</h2>'+
   '<p>Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
+  '<h2>7. SEPA-Lastschriftmandat</h2>'+
+  '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
+  '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
+  rows('IBAN', ibanFmt(k.iban) || blank)+
+  rows('BIC', k.bic || blank)+
+  rows('Mandatsreferenz', vnr)+
+  rows('Gl\u00e4ubiger-Identifikationsnummer','wird von der St\u00f6lner Ges.m.b.H. erg\u00e4nzt')+
+  rows('Zahlungsart','Wiederkehrende Zahlung \u00b7 monatlich im Voraus \u00b7 '+netto+' zzgl. gesetzlicher USt')+'</table>'+
+  '<div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift Kontoinhaber (SEPA-Mandat)</div></div><div></div></div>'+
   '<div class="sig"><div><div class="line">Ort, Datum &middot; St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; '+(k.firma||'Mieter')+'</div></div></div>'+
   '<p class="hinweis">Vertragsentwurf, erstellt mit dem St\u00f6lner Mietkalkulator am '+heute+'. Dieser Entwurf ersetzt keine Rechtsberatung und wird erst mit beidseitiger Unterschrift der gepr\u00fcften Endfassung wirksam.</p>'+
   '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
 }
-$('btnVertrag').onclick = () => { $('vertragDlg').showModal(); };
+$('btnVertrag').onclick = () => {
+  $('vertragDlg').showModal();
+  $('vIban').oninput = () => {
+    const v = $('vIban').value;
+    $('vIban').style.borderColor = !v || ibanOk(v) ? 'var(--line)' : '#C0392B';
+  };
+};
 $('vAbbrechen').onclick = () => $('vertragDlg').close();
 $('vErstellen').onclick = () => {
   const c = currentConfig(); const r = compute(c);
-  const k = {firma: $('vFirma').value.trim(), name: $('vName').value.trim(), adresse: $('vAdresse').value.trim()};
+  const k = {firma: $('vFirma').value.trim(), name: $('vName').value.trim(), adresse: $('vAdresse').value.trim(),
+             konto: $('vKonto').value.trim(), iban: ibanNorm($('vIban').value), bic: $('vBic').value.trim().toUpperCase()};
+  if (k.iban && !ibanOk(k.iban)){
+    if (!confirm('Die IBAN sieht ungültig aus (Prüfsumme stimmt nicht). Trotzdem übernehmen?')) return;
+  }
   const w = window.open('', '_blank');
   if (!w){ alert('Bitte Pop-ups f\u00fcr diese Seite erlauben.'); return; }
   w.document.write(vertragHtml(c, r, k));
