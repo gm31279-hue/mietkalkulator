@@ -358,6 +358,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aKwh">Strom je Einheit (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
     <div style="grid-column:1/-1"><label for="aAktion">Aktionshinweis (unter der Auswahl, leer = kein Hinweis)</label><input type="text" id="aAktion" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
+    <div><label for="aAgb">AGB-Link (URL)</label><input type="text" id="aAgb" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aEmail">Anfrage-E-Mail</label><input type="text" id="aEmail" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aPin">Admin-PIN</label><input type="text" id="aPin" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
   </div>
@@ -461,7 +462,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <footer>
   <div class="wrap frow">
     <span>Stölner Ges.m.b.H. · Burggasse 120, A-1070 Wien · Herzogenburgerstraße 9, A-3100 St. Pölten</span>
-    <span>Alle Angaben vorbehaltlich verbindlichem Angebot · <a href="#" id="adminLink" style="color:inherit">Admin</a></span>
+    <span>Alle Angaben vorbehaltlich verbindlichem Angebot · <a href="https://www.stoelner.at/agb" id="agbLink" target="_blank" rel="noopener" style="color:inherit">AGB</a> · <a href="#" id="adminLink" style="color:inherit">Admin</a></span>
   </div>
 </footer>
 
@@ -507,6 +508,7 @@ const FACTORY = {
   /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar
      Übernahme nach Vertragsende: immer eine Monatsrate (laufzeitabhängig), kein Fixbetrag */
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
+  agbUrl: 'https://www.stoelner.at/agb',
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
@@ -532,7 +534,7 @@ function mergeConfig(base, over){
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
   ['zuschlag','zuschlagFlat','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
-  ['email','pin','aktionsHinweis'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  ['email','pin','aktionsHinweis','agbUrl'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
@@ -978,17 +980,19 @@ function renderAdmin(){
   $('aKwh').value = CONFIG.kwh;
   $('aStrom').value = CONFIG.strom;
   $('aAktion').value = CONFIG.aktionsHinweis || '';
+  $('aAgb').value = CONFIG.agbUrl || '';
   $('aEmail').value = CONFIG.email;
   $('aPin').value = CONFIG.pin;
 }
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
-      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis') ? raw : (+raw || 0);
+      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis' || path[0] === 'agbUrl') ? raw : (+raw || 0);
+      if (path[0] === 'agbUrl') $('agbLink').href = raw || '#';
       if (path.length === 2) CONFIG[path[0]][path[1]] = val; else CONFIG[path[0]] = val;
       saveLocal(); calc();
     };
@@ -1124,6 +1128,9 @@ function ibanFmt(s){ const i = ibanNorm(s); return i ? i.replace(/(.{4})/g,'$1 '
 
 function vertragHtml(c, r, k){
   const heute = new Date().toLocaleDateString('de-AT');
+  const headerImg = document.querySelector('header img');
+  const logoSrc = headerImg ? headerImg.src : '';
+  const agb = CONFIG.agbUrl || '';
   const netto = eur2.format(r.rate);
   const ende = 'einer Monatsrate (' + eur2.format(r.rate) + ')';
   const monate = c.L;
@@ -1141,7 +1148,7 @@ function vertragHtml(c, r, k){
   '@media print{body{margin:10mm auto}}'+
   '</style></head><body>'+
   '<div class="kopf"><div><h1>Mietvertrag</h1><div style="font-size:12px;color:#555">Vertragsnummer: '+vnr+' &middot; Datum: '+heute+'</div></div>'+
-  '<div class="adr"><b>St\u00f6lner Ges.m.b.H.</b><br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
+  '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="St\u00f6lner" style="height:38px;margin-bottom:8px">' : '<b>St\u00f6lner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
   '<h2>1. Vertragsparteien</h2>'+
   '<table>'+rows('Vermieterin','St\u00f6lner Ges.m.b.H., Burggasse 120, A-1070 Wien')+
   rows('Mieter', (k.firma||'____________________')+'<br>vertreten durch: '+(k.name||'____________________')+'<br>'+(k.adresse||'____________________'))+'</table>'+
@@ -1160,7 +1167,7 @@ function vertragHtml(c, r, k){
   '<h2>5. Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>6. Sonstiges</h2>'+
-  '<p>Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
+  '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
   '<h2>7. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
@@ -1207,6 +1214,7 @@ if ('IntersectionObserver' in window && ergebnisSec){
 /* ===== Init: Standard <- config.json <- lokale Admin-Änderungen ===== */
 function start(){
   bindAdminGlobals();
+  $('agbLink').href = CONFIG.agbUrl || '#';
   buildKatSelect();
   buildSelect();
   buildWaterSelect();
