@@ -1184,17 +1184,22 @@ function vertragHtml(c, r, k){
   rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial'+(c.hatWasser ? ' (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')' : (c.posten.length ? ' ('+c.posten.map(p => p.name).join(', ')+')' : ''))+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Technikereinsatz Mo\u2013Fr')+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe \u2013 beidseitig zum Monatsende k\u00fcndbar (Flatrate)' : monate+' Monate ab betriebsfertiger \u00dcbergabe')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
-  '<h2>4. Vertragsende</h2>'+
-  '<p>'+(c.flat ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten monatlich zum Monatsende gek\u00fcndigt werden. Nach Vertragsende nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung in H\u00f6he '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
-  '<h2>5. Eigentum und Sorgfalt</h2>'+
+  '<h2>4. K\u00fcndigung</h2>'+
+  '<p>'+(c.flat
+    ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden (Flatrate ohne Mindestlaufzeit).'
+    : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
+  ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
+  '<h2>5. Vertragsende</h2>'+
+  '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer bzw. nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung in H\u00f6he '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
+  '<h2>6. Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
-  '<h2>6. Sonstiges</h2>'+
+  '<h2>7. Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
-  '<h2 class="sepaSeite">7. SEPA-Lastschriftmandat</h2>'+
+  '<h2 class="sepaSeite">8. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
   rows('IBAN', ibanFmt(k.iban) || blank)+
