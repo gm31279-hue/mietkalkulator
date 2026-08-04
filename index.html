@@ -191,7 +191,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="grid g4" id="geraeteFelder" hidden style="margin-top:10px">
       <div><label for="pGeraet">Listenpreis Gerät (€)</label><input type="number" id="pGeraet" min="0" step="10"></div>
       <div><label for="pWasser" id="pWasserLabel">Wasser je Spülgang (l)</label><input type="number" id="pWasser" min="0" step="0.1"></div>
-      <div><label for="pSchutz">Rundumschutz 5 J. (€)</label><input type="number" id="pSchutz" min="0" step="10"></div>
+      <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px" id="schutzInfo">Rundumschutz: automatisch nach Staffel</div>
     </div>
   </section>
 
@@ -293,7 +293,6 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <th style="padding:6px 8px;font-weight:500">Kategorie</th>
           <th style="padding:6px 8px;font-weight:500">Preis €</th>
           <th style="padding:6px 8px;font-weight:500">Wasser l/Einheit</th>
-          <th style="padding:6px 8px;font-weight:500">Schutz 5 J. €</th>
           <th style="padding:6px 8px;font-weight:500">Einheiten/Tag</th>
           <th></th>
         </tr>
@@ -334,9 +333,27 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="grid g3">
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
-    <div><label for="aSchutzLimit">Rundumschutz bis Listenpreis (€)</label><input type="number" id="aSchutzLimit" min="0" step="100"></div>
-    <div><label for="aEnd">Endzahlung Übernahme (€)</label><input type="number" id="aEnd" min="0" step="10"></div>
-    <div><label for="aKwh">Strom je Spülgang (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
+    <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Übernahme nach Vertragsende: automatisch eine Monatsrate (laufzeitabhängig).</div>
+  </div>
+
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Rundumschutz-Staffel (netto Listenpreis)</h3>
+  <div style="overflow-x:auto">
+    <table id="schutzTable" style="border-collapse:collapse;font-size:13.5px;min-width:420px">
+      <thead>
+        <tr style="text-align:left;color:var(--grey)">
+          <th style="padding:6px 8px 6px 0;font-weight:500">bis Listenpreis €</th>
+          <th style="padding:6px 8px;font-weight:500">Rundumschutz 5 J. €</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddSchutz" style="padding:8px 16px;font-size:13px">+ Stufe hinzufügen</button></p>
+  <p class="hint">Der Rundumschutz wird automatisch aus dem Listenpreis abgeleitet. Über der höchsten Stufe entfällt er.</p>
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Sonstiges</h3>
+  <div class="grid g3">
+    <div><label for="aKwh">Strom je Einheit (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
     <div style="grid-column:1/-1"><label for="aAktion">Aktionshinweis (unter der Auswahl, leer = kein Hinweis)</label><input type="text" id="aAktion" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
     <div><label for="aEmail">Anfrage-E-Mail</label><input type="text" id="aEmail" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
@@ -466,10 +483,16 @@ const FACTORY = {
     {id:'softeis', name:'Softeismaschinen · Daten bitte einpflegen', einheit:'Portion', plural:'Portionen', wasser:false, schaetz:false, posten:[]}
   ],
   models: [
-    {id:'o31', kat:'spueler', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, schutz:399, wg:24},
-    {id:'o41', kat:'spueler', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, schutz:399, wg:30},
-    {id:'o61', kat:'spueler', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, schutz:399, wg:18},
-    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, schutz:499, wg:40}
+    {id:'o31', kat:'spueler', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, wg:24},
+    {id:'o41', kat:'spueler', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, wg:30},
+    {id:'o61', kat:'spueler', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, wg:18},
+    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, wg:40}
+  ],
+  /* Rundumschutz-Staffel nach netto Listenpreis – über der höchsten Stufe entfällt der Rundumschutz */
+  schutzStaffel: [
+    {bis:1667, preis:249},
+    {bis:8333, preis:399},
+    {bis:12500, preis:579}
   ],
   water: [
     {id:'c1100', name:'C1100 Clean', aktion:395, liste:395, wechsel:204, kap:9000, iq:true, tipp:'C1100 Clean: normales Spülergebnis, reduziert Chemie und verhindert Korrosion.'},
@@ -479,8 +502,8 @@ const FACTORY = {
   iqMeter: {aktion:115, liste:164},
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar
-     schutzLimit: Rundumschutz nur für Geräte bis netto Listenpreis dieser Grenze – darüber automatisch 0 */
-  zuschlag: 15, zuschlagFlat: 30, schutzLimit: 12500, end: 240, kwh: 0, strom: 0.25,
+     Übernahme nach Vertragsende: immer eine Monatsrate (laufzeitabhängig), kein Fixbetrag */
+  zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
@@ -503,8 +526,9 @@ function mergeConfig(base, over){
   if (Array.isArray(over.kategorien) && over.kategorien.length && over.kategorien.every(k => typeof k.id === 'string' && typeof k.name === 'string' && Array.isArray(k.posten))) out.kategorien = clone(over.kategorien);
   if (Array.isArray(over.models) && over.models.length && over.models.every(m => typeof m.wasser === 'number' && typeof m.kat === 'string')) out.models = clone(over.models);
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
+  if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','schutzLimit','end','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin','aktionsHinweis'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
@@ -540,9 +564,19 @@ function buildWaterSelect(keepId){
 
 function selectedModel(){
   const kat = selectedKat();
-  if (sel.value === '__free') return {id:'__free', kat:kat.id, name:'Eigenes Modell', geraet:3000, wasser:kat.wasser ? 4 : 0, schutz:399, wg:24};
+  if (sel.value === '__free') return {id:'__free', kat:kat.id, name:'Eigenes Modell', geraet:3000, wasser:kat.wasser ? 4 : 0, wg:24};
   return CONFIG.models.find(x => x.id === sel.value && x.kat === kat.id) || CONFIG.models.find(x => x.kat === kat.id) ||
-         {id:'__free', kat:kat.id, name:'Eigenes Modell', geraet:3000, wasser:0, schutz:399, wg:24};
+         {id:'__free', kat:kat.id, name:'Eigenes Modell', geraet:3000, wasser:0, wg:24};
+}
+
+/* Rundumschutz-Staffel: erster Staffelwert, dessen "bis" den Listenpreis abdeckt – darüber 0 */
+function schutzFor(preis){
+  const st = (CONFIG.schutzStaffel || []).slice().sort((a, b) => a.bis - b.bis);
+  for (const s of st){ if (preis <= s.bis) return s.preis || 0; }
+  return 0;
+}
+function schutzMax(){
+  return (CONFIG.schutzStaffel || []).reduce((m, s) => Math.max(m, s.bis || 0), 0);
 }
 
 function selectedWater(){
@@ -553,7 +587,6 @@ function loadModelFields(){
   const m = selectedModel();
   $('pGeraet').value = m.geraet;
   $('pWasser').value = m.wasser;
-  $('pSchutz').value = m.schutz;
   $('wg').value = m.wg;
 }
 
@@ -595,9 +628,8 @@ function currentConfig(){
     hatWasser, posten: (kat.posten || []).filter(p => p && p.preis > 0 && p.je > 0),
     geraet: +$('pGeraet').value || 0,
     wasser: +$('pWasser').value || 0,
-    /* Rundumschutz nur bis Listenpreis-Grenze (Standard 12.500 € netto) */
-    schutz: ((+$('pGeraet').value || 0) > (CONFIG.schutzLimit || 12500)) ? 0 : (+$('pSchutz').value || 0),
-    schutzEntfaellt: (+$('pGeraet').value || 0) > (CONFIG.schutzLimit || 12500),
+    /* Rundumschutz automatisch nach Staffel (netto Listenpreis) */
+    schutz: schutzFor(+$('pGeraet').value || 0),
     days, wg,
     dh: +$('dh').value, wp: +$('wp').value,
     /* Flatrate: keine Mindestlaufzeit – Rate wie Beispielrechnung laufzeitunabhängig auf 60 Monate amortisiert */
@@ -609,7 +641,7 @@ function currentConfig(){
     kart: hatWasser ? (wo.wechsel || 0) : 0, kap: hatWasser ? (wo.kap || 0) : 0,
     osmose: hatWasser && !(wo.kap > 0),
     zuschlag: ($('runtime').value === 'flat' ? (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag) : CONFIG.zuschlag)/100,
-    end: CONFIG.end, kwh: CONFIG.kwh, strom: CONFIG.strom
+    kwh: CONFIG.kwh, strom: CONFIG.strom
   };
 }
 
@@ -672,7 +704,7 @@ function drawChart(c, r){
 }
 
 function shareUrl(c){
-  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, s:c.schutz, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
+  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
   return location.origin + location.pathname + '#' + p.toString();
 }
 
@@ -722,11 +754,12 @@ function calc(){
   $('incVerbrauch').textContent = c.hatWasser
     ? (c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen')
     : (c.posten.length ? 'Sämtliches Verbrauchsmaterial' : 'Verbrauch lt. Vereinbarung');
-  $('incSchutz').textContent = c.schutz > 0 ? 'Rundumschutz + Wartung' : 'Wartung + Technikereinsatz (Rundumschutz ab ' + eur.format(CONFIG.schutzLimit || 12500) + ' Listenpreis nicht verfügbar)';
+  $('incSchutz').textContent = c.schutz > 0 ? 'Rundumschutz + Wartung' : 'Wartung + Technikereinsatz (Rundumschutz ab ' + eur.format(schutzMax()) + ' Listenpreis nicht verfügbar)';
+  $('schutzInfo').textContent = c.schutz > 0 ? 'Rundumschutz automatisch: ' + eur.format(c.schutz) + ' (Staffel)' : 'Rundumschutz entfällt (Listenpreis über ' + eur.format(schutzMax()) + ')';
   if (c.hatWasser) $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = c.flat
-    ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.'
-    : 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
+    ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
+    : 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').';
 
   $('kInvest').textContent = eur.format(r.invest);
   $('kLauf').textContent = eur.format(r.lauf);
@@ -771,10 +804,11 @@ function calc(){
     '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct(v.r.rate * v.L / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => v.flat ? '–' : eur.format(v.r.total)) + '</tr>' +
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => v.flat ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
+    '<tr><td>danach: Übernahme (= 1 Monatsrate) oder Rücknahme</td>' + vcell(v => eur2.format(v.r.rate)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
   $('varNote').textContent = 'Spalte anklicken, um Laufzeit bzw. Flatrate zu übernehmen. Je ' + c.einheit + ' inkl. Nebenkosten' +
-    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je Spülgang auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.';
+    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner oder Übernahme um eine Monatsrate.';
 
   drawChart(c, r);
   buildMail(c, r);
@@ -862,7 +896,7 @@ function renderAdmin(){
     tr.innerHTML =
       '<td style="padding:5px 8px 5px 0"><input type="text" data-i="' + i + '" data-k="name" value="" style="' + inpStyle + '"></td>' +
       '<td style="padding:5px 8px"><select data-i="' + i + '" data-k="kat" style="' + inpStyle + ';min-width:150px">' + katOpts + '</select></td>' +
-      ['geraet','wasser','schutz','wg'].map(k =>
+      ['geraet','wasser','wg'].map(k =>
         '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="' + k + '" value="' + m[k] + '" style="' + inpStyle + ';min-width:84px"></td>').join('') +
       '<td style="padding:5px 0 5px 8px"><button type="button" data-del="' + i + '" title="Modell löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = m.name;
@@ -916,8 +950,24 @@ function renderAdmin(){
   $('aIqL').value = CONFIG.iqMeter.liste;
   $('aZuschlag').value = CONFIG.zuschlag;
   $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
-  $('aSchutzLimit').value = typeof CONFIG.schutzLimit === 'number' ? CONFIG.schutzLimit : 12500;
-  $('aEnd').value = CONFIG.end;
+  const stb = document.querySelector('#schutzTable tbody');
+  stb.innerHTML = '';
+  CONFIG.schutzStaffel.forEach((s, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="padding:5px 8px 5px 0"><input type="number" step="any" data-i="' + i + '" data-k="bis" value="' + s.bis + '" style="' + inpStyle + ';min-width:130px"></td>' +
+      '<td style="padding:5px 8px"><input type="number" step="any" data-i="' + i + '" data-k="preis" value="' + s.preis + '" style="' + inpStyle + ';min-width:130px"></td>' +
+      '<td style="padding:5px 0 5px 8px"><button type="button" data-sdel="' + i + '" title="Stufe löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
+    stb.appendChild(tr);
+  });
+  stb.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+    CONFIG.schutzStaffel[+inp.dataset.i][inp.dataset.k] = +inp.value || 0;
+    saveLocal(); calc();
+  });
+  stb.querySelectorAll('button[data-sdel]').forEach(btn => btn.onclick = () => {
+    CONFIG.schutzStaffel.splice(+btn.dataset.sdel, 1);
+    saveLocal(); renderAdmin(); calc();
+  });
   $('aKwh').value = CONFIG.kwh;
   $('aStrom').value = CONFIG.strom;
   $('aAktion').value = CONFIG.aktionsHinweis || '';
@@ -927,7 +977,7 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSchutzLimit:['schutzLimit'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
@@ -959,8 +1009,13 @@ $('btnAdminOff').onclick = () => setAdmin(false);
 $('btnAddModel').onclick = () => {
   const id = 'm' + Date.now().toString(36);
   const kat = selectedKat();
-  CONFIG.models.push({id, kat:kat.id, name:'Neues Modell', geraet:2000, wasser:kat.wasser ? 4 : 0, schutz:399, wg:24});
+  CONFIG.models.push({id, kat:kat.id, name:'Neues Modell', geraet:2000, wasser:kat.wasser ? 4 : 0, wg:24});
   saveLocal(); buildSelect(sel.value); renderAdmin(); calc();
+};
+
+$('btnAddSchutz').onclick = () => {
+  CONFIG.schutzStaffel.push({bis:0, preis:0});
+  saveLocal(); renderAdmin(); calc();
 };
 
 $('btnAddKat').onclick = () => {
@@ -1017,7 +1072,6 @@ function applyHash(){
   if (p.get('pb') === 'liste') $('preisbasis').value = 'liste';
   if (p.has('g')) $('pGeraet').value = get('g');
   if (p.has('wa')) $('pWasser').value = get('wa');
-  if (p.has('s')) $('pSchutz').value = get('s');
   if (p.has('d')) $('days').value = get('d');
   if (p.has('w')) $('wg').value = get('w');
   if (p.has('h')) $('dh').value = get('h');
@@ -1038,7 +1092,7 @@ sel.onchange = () => { loadModelFields(); calc(); };
 $('katSel').onchange = () => { buildSelect(); loadModelFields(); calc(); };
 $('waterSel').onchange = calc;
 $('preisbasis').onchange = calc;
-['pGeraet','pWasser','pSchutz','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
+['pGeraet','pWasser','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
 $('runtime').onchange = calc;
 $('btnShare').onclick = () => {
   const url = shareUrl(currentConfig());
@@ -1063,7 +1117,7 @@ function ibanFmt(s){ const i = ibanNorm(s); return i ? i.replace(/(.{4})/g,'$1 '
 function vertragHtml(c, r, k){
   const heute = new Date().toLocaleDateString('de-AT');
   const netto = eur2.format(r.rate);
-  const ende = eur.format(c.end);
+  const ende = 'einer Monatsrate (' + eur2.format(r.rate) + ')';
   const monate = c.L;
   const vnr = 'SPK-' + Date.now().toString(36).toUpperCase();
   const blank = '____________________';
@@ -1094,7 +1148,7 @@ function vertragHtml(c, r, k){
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
   '<h2>4. Vertragsende</h2>'+
-  '<p>'+(c.flat ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten monatlich zum Monatsende gek\u00fcndigt werden. Nach Vertragsende nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung von '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
+  '<p>'+(c.flat ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten monatlich zum Monatsende gek\u00fcndigt werden. Nach Vertragsende nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung in H\u00f6he '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
   '<h2>5. Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>6. Sonstiges</h2>'+
