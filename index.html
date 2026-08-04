@@ -334,6 +334,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="grid g3">
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
+    <div><label for="aSchutzLimit">Rundumschutz bis Listenpreis (€)</label><input type="number" id="aSchutzLimit" min="0" step="100"></div>
     <div><label for="aEnd">Endzahlung Übernahme (€)</label><input type="number" id="aEnd" min="0" step="10"></div>
     <div><label for="aKwh">Strom je Spülgang (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
@@ -374,7 +375,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <table>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incGeraet">Gerät, Wasseraufbereitung, iQ Meter</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incVerbrauch">Spülmittel, Trockner, Kartuschen</span></td><td></td></tr>
-          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Rundumschutz + Wartung</td><td></td></tr>
+          <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incSchutz">Rundumschutz + Wartung</span></td><td></td></tr>
           <tr><td class="inc" id="mTotalLabel">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc" id="mWgLabel">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
         </table>
@@ -458,8 +459,9 @@ const FACTORY = {
        {name:'Spülmittel Professional Clean 12 kg', preis:92, je:4000},
        {name:'Glanztrockner Professional dry 12 kg', preis:96, je:40000}
      ]},
-    {id:'combi', name:'Combidämpfer · Daten bitte einpflegen', einheit:'Garvorgang', plural:'Garvorgänge', wasser:false, schaetz:false, posten:[]},
-    {id:'espresso', name:'Espressomaschinen · Daten bitte einpflegen', einheit:'Bezug', plural:'Bezüge', wasser:false, schaetz:false, posten:[]},
+    {id:'combi', name:'Combidämpfer · Daten bitte einpflegen', einheit:'Garvorgang', plural:'Garvorgänge', wasser:true, schaetz:false,
+     posten:[{name:'Combi-Reiniger (Preis und Gebinde bitte einpflegen)', preis:0, je:1}]},
+    {id:'espresso', name:'Espressomaschinen · Daten bitte einpflegen', einheit:'Bezug', plural:'Bezüge', wasser:true, schaetz:false, posten:[]},
     {id:'eis', name:'Eismaschinen · Daten bitte einpflegen', einheit:'kg Eis', plural:'kg Eis', wasser:false, schaetz:false, posten:[]},
     {id:'softeis', name:'Softeismaschinen · Daten bitte einpflegen', einheit:'Portion', plural:'Portionen', wasser:false, schaetz:false, posten:[]}
   ],
@@ -476,8 +478,9 @@ const FACTORY = {
   ],
   iqMeter: {aktion:115, liste:164},
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
-  /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar */
-  zuschlag: 15, zuschlagFlat: 30, end: 240, kwh: 0, strom: 0.25,
+  /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar
+     schutzLimit: Rundumschutz nur für Geräte bis netto Listenpreis dieser Grenze – darüber automatisch 0 */
+  zuschlag: 15, zuschlagFlat: 30, schutzLimit: 12500, end: 240, kwh: 0, strom: 0.25,
   email: 'office@stoelner.at', pin: '720'
 };
 const LS_KEY = 'stoelnerKonfigurator';
@@ -501,7 +504,7 @@ function mergeConfig(base, over){
   if (Array.isArray(over.models) && over.models.length && over.models.every(m => typeof m.wasser === 'number' && typeof m.kat === 'string')) out.models = clone(over.models);
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','end','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','schutzLimit','end','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin','aktionsHinweis'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
@@ -592,7 +595,9 @@ function currentConfig(){
     hatWasser, posten: (kat.posten || []).filter(p => p && p.preis > 0 && p.je > 0),
     geraet: +$('pGeraet').value || 0,
     wasser: +$('pWasser').value || 0,
-    schutz: +$('pSchutz').value || 0,
+    /* Rundumschutz nur bis Listenpreis-Grenze (Standard 12.500 € netto) */
+    schutz: ((+$('pGeraet').value || 0) > (CONFIG.schutzLimit || 12500)) ? 0 : (+$('pSchutz').value || 0),
+    schutzEntfaellt: (+$('pGeraet').value || 0) > (CONFIG.schutzLimit || 12500),
     days, wg,
     dh: +$('dh').value, wp: +$('wp').value,
     /* Flatrate: keine Mindestlaufzeit – Rate wie Beispielrechnung laufzeitunabhängig auf 60 Monate amortisiert */
@@ -717,6 +722,7 @@ function calc(){
   $('incVerbrauch').textContent = c.hatWasser
     ? (c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen')
     : (c.posten.length ? 'Sämtliches Verbrauchsmaterial' : 'Verbrauch lt. Vereinbarung');
+  $('incSchutz').textContent = c.schutz > 0 ? 'Rundumschutz + Wartung' : 'Wartung + Technikereinsatz (Rundumschutz ab ' + eur.format(CONFIG.schutzLimit || 12500) + ' Listenpreis nicht verfügbar)';
   if (c.hatWasser) $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = c.flat
     ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um ' + eur.format(c.end) + '.'
@@ -735,7 +741,7 @@ function calc(){
   const comp = [{k:'geraet', label:'Gerät (Laufzeit-Anteil)', v:c.geraet/r.wgTotal}];
   if (c.hatWasser) comp.push({k:'wasserauf', label:'Wasseraufbereitung (' + c.waterName + (c.osmose ? ', Membrantausch)' : ', iQ, Kartuschen)'), v:(c.filter + c.iq + r.kartN*c.kart)/r.wgTotal});
   if (r.postenKosten > 0) comp.push({k:'chemie', label:'Verbrauchsmaterial (' + c.posten.map(p => p.name.split(' ')[0]).join(', ') + ')', v:r.postenKosten/r.wgTotal});
-  comp.push({k:'schutz', label:'Rundumschutz + Wartung', v:r.schutzL/r.wgTotal});
+  if (r.schutzL > 0) comp.push({k:'schutz', label:'Rundumschutz + Wartung', v:r.schutzL/r.wgTotal});
   if (r.waterPerWash > 0) comp.push({k:'wasser', label:'Frisch- und Abwasser', v:r.waterPerWash});
   if (r.stromPerWash > 0) comp.push({k:'strom', label:'Strom', v:r.stromPerWash});
   const sum = comp.reduce((s,x) => s + x.v, 0);
@@ -763,7 +769,7 @@ function calc(){
     '<tr><td>Mietrate je Monat</td>' + vcell(v => eur2.format(v.r.rate), 'rate') + '</tr>' +
     '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : eur.format(v.r.rate * v.L)) + '</tr>' +
     '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct(v.r.rate * v.L / v.r.wgTotal + v.r.neben)) + '</tr>' +
-    '<tr><td>Kauf gesamt (inkl. Rundumschutz)</td>' + vcell(v => v.flat ? '–' : eur.format(v.r.total)) + '</tr>' +
+    '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => v.flat ? '–' : eur.format(v.r.total)) + '</tr>' +
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => v.flat ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
@@ -910,6 +916,7 @@ function renderAdmin(){
   $('aIqL').value = CONFIG.iqMeter.liste;
   $('aZuschlag').value = CONFIG.zuschlag;
   $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
+  $('aSchutzLimit').value = typeof CONFIG.schutzLimit === 'number' ? CONFIG.schutzLimit : 12500;
   $('aEnd').value = CONFIG.end;
   $('aKwh').value = CONFIG.kwh;
   $('aStrom').value = CONFIG.strom;
@@ -920,7 +927,7 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSchutzLimit:['schutzLimit'], aEnd:['end'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
@@ -1079,7 +1086,7 @@ function vertragHtml(c, r, k){
   '<h2>2. Mietgegenstand und Leistungsumfang</h2>'+
   '<table>'+rows('Ger\u00e4t', c.name)+
   rows('Inkludiertes Zubeh\u00f6r', c.hatWasser ? 'Wasseraufbereitung '+c.waterName+(c.iq > 0 ? ', iQ Meter' : '') : 'lt. Angebot')+
-  rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial'+(c.hatWasser ? ' (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')' : (c.posten.length ? ' ('+c.posten.map(p => p.name).join(', ')+')' : ''))+', Rundumschutz, Wartung, Technikereinsatz Mo\u2013Fr')+
+  rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial'+(c.hatWasser ? ' (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')' : (c.posten.length ? ' ('+c.posten.map(p => p.name).join(', ')+')' : ''))+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Technikereinsatz Mo\u2013Fr')+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
   '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe \u2013 beidseitig zum Monatsende k\u00fcndbar (Flatrate)' : monate+' Monate ab betriebsfertiger \u00dcbergabe')+
