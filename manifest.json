@@ -1,0 +1,17 @@
+{
+  "name": "Stölner Gastrotechnik-Mietkalkulator",
+  "short_name": "Mietkalkulator",
+  "description": "Gastrotechnik mieten statt kaufen – Rate in 30 Sekunden berechnen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FAF8F6",
+  "theme_color": "#E3007A",
+  "lang": "de",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

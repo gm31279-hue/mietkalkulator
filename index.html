@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stölner Gastrotechnik-Mietkalkulator</title>
 <meta name="description" content="Gastrotechnik mieten statt kaufen: Gerät wählen, Betrieb beschreiben, Kauf und Miete vergleichen – auf den Cent genau.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E3007A">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mietkalkulator">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Expanded:wght@600;700&display=swap" rel="stylesheet">
@@ -1316,6 +1323,11 @@ function start(){
   buildWaterSelect();
   if (location.hash.length > 1) applyHash(); else loadModelFields();
   if (mode === 'schaetz') setMode('schaetz'); else calc();
+}
+
+/* PWA: Service Worker für Offline-Betrieb auf den AD-Tablets */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
 fetch('config.json', {cache:'no-store'})
