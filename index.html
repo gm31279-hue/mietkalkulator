@@ -510,7 +510,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.4';
+const APP_VERSION = '1.1.5';
 const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -903,7 +903,7 @@ function calc(){
   const comp = [{k:'geraet', label:'Gerät (Laufzeit-Anteil)', v:c.geraet/r.wgTotal}];
   if (c.hatWasser) comp.push({k:'wasserauf', label:'Wasseraufbereitung (' + c.waterName + (c.osmose ? ', Membrantausch)' : ', iQ, Kartuschen)'), v:(c.filter + c.iq + r.kartN*c.kart)/r.wgTotal});
   if (r.postenKosten > 0) comp.push({k:'chemie', label:'Verbrauchsmaterial (' + c.posten.map(p => p.name.split(' ')[0]).join(', ') + ')', v:r.postenKosten/r.wgTotal});
-  if (r.schutzL + r.wartungK > 0) comp.push({k:'schutz', label:'Rundumschutz + Wartung', v:(r.schutzL + r.wartungK)/r.wgTotal});
+  if (r.schutzL + r.wartungK > 0) comp.push({k:'schutz', label: c.schutz > 0 ? 'Rundumschutz + Wartung' : 'Wartung', v:(r.schutzL + r.wartungK)/r.wgTotal});
   if (r.waterPerWash > 0) comp.push({k:'wasser', label:'Frisch- und Abwasser', v:r.waterPerWash});
   if (r.stromPerWash > 0) comp.push({k:'strom', label:'Strom', v:r.stromPerWash});
   const sum = comp.reduce((s,x) => s + x.v, 0);
@@ -1295,7 +1295,14 @@ function vertragHtml(c, r, k){
   '<h2>2. Mietgegenstand und Leistungsumfang</h2>'+
   '<table>'+rows('Ger\u00e4t', c.name)+
   rows('Inkludiertes Zubeh\u00f6r', c.hatWasser ? 'Wasseraufbereitung '+c.waterName+(c.iq > 0 ? ', iQ Meter' : '') : 'lt. Angebot')+
-  rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial'+(c.hatWasser ? ' (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')' : (c.posten.length ? ' ('+c.posten.map(p => p.name).join(', ')+')' : ''))+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Technikereinsatz Mo\u2013Fr')+
+  rows('Inkludierte Leistungen', (function(){
+    /* Verbrauchsmaterial nur zusagen, wenn die Kategorie welches enthaelt */
+    const verbrauch = c.hatWasser
+      ? 'S\u00e4mtliches Verbrauchsmaterial (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')'
+      : (c.posten.length ? 'S\u00e4mtliches Verbrauchsmaterial ('+c.posten.map(p => p.name).join(', ')+')' : '');
+    const teile = [verbrauch, c.schutz > 0 ? 'Rundumschutz' : '', 'Wartung', 'Technikereinsatz Mo\u2013Fr'].filter(x => x);
+    return teile.join(', ') + (verbrauch ? '' : '<br><span style="color:#666">Verbrauchsmaterial ist nicht Bestandteil dieses Vertrags.</span>');
+  })())+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
   '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
