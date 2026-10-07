@@ -196,8 +196,19 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       </div>
     </div>
     <p class="hint" id="waterHint" style="margin-bottom:4px">Alle Preise und Verbrauchswerte sind bereits hinterlegt. Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.</p>
+    <div class="grid g2" style="margin-top:10px">
+      <div>
+        <label for="pGeraet">Angebotspreis Gerät netto (€)</label>
+        <input type="number" id="pGeraet" min="0" step="10">
+        <p class="hint" id="geraetBasisHint" style="margin-top:4px"></p>
+      </div>
+      <div style="align-self:start">
+        <label>&nbsp;</label>
+        <p class="hint" id="angebotHint" style="margin-top:12px">Die Miete wird aus diesem Preis gerechnet. Preisbasis setzt nur den Startwert – überschreiben Sie ihn mit dem tatsächlich angebotenen Preis.</p>
+        <p class="hint" id="rabattHint" style="margin-top:4px;font-weight:600"></p>
+      </div>
+    </div>
     <div class="grid g4" id="geraeteFelder" hidden style="margin-top:10px">
-      <div><label for="pGeraet">Listenpreis Gerät (€)</label><input type="number" id="pGeraet" min="0" step="10"></div>
       <div><label for="pWasser" id="pWasserLabel">Wasser je Spülgang (l)</label><input type="number" id="pWasser" min="0" step="0.1"></div>
       <div><label for="pWartung">Wartung (€/Jahr)</label><input type="number" id="pWartung" min="0" step="10"></div>
       <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px" id="schutzInfo">Rundumschutz: automatisch nach Staffel</div>
@@ -216,6 +227,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <input type="range" id="wg" min="6" max="80" step="1" value="24">
       <output id="wgOut">24</output>
     </div>
+    <p class="hint" id="mengeHint" hidden style="margin:-4px 0 6px">Startwert ist ein Platzhalter. In dieser Kategorie beeinflusst die Menge nur die Anzeige je Einheit – die Monatsrate bleibt unverändert.</p>
     <details style="margin-top:10px">
       <summary style="cursor:pointer;font-size:13px;color:var(--grey);list-style:none;display:inline-flex;align-items:center;gap:6px">Mehr Optionen (Betriebstage, Wasserhärte, Laufzeit) <span style="color:var(--magenta);font-size:16px">+</span></summary>
       <div style="margin-top:10px">
@@ -259,6 +271,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <option value="36">36 Monate (3 Jahre)</option>
         <option value="48">48 Monate (4 Jahre)</option>
         <option value="60" selected>60 Monate (5 Jahre, Standard)</option>
+        <option value="saison">Saisonmiete – zahlen nur in der Saison</option>
         <option value="flat">Flatrate – ohne Laufzeit, jederzeit kündbar</option>
       </select>
       <span></span>
@@ -343,8 +356,12 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="grid g3">
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
+    <div><label for="aSaisonM">Saisonmiete: Zahlmonate je Jahr</label><input type="number" id="aSaisonM" min="1" max="12" step="1"></div>
+    <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
     <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Übernahme nach Vertragsende: automatisch eine Monatsrate (laufzeitabhängig).</div>
   </div>
+
+  <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Rundumschutz-Staffel (netto Listenpreis)</h3>
   <div style="overflow-x:auto">
@@ -493,8 +510,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.0.1';
-const APP_STAND = '04.08.2026';
+const APP_VERSION = '1.1.0';
+const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
    Kategorien: einheit = Bezugseinheit (Singular), plural = Mehrzahl · posten = Verbrauchspositionen (preis € je Gebinde, je = Einheiten je Gebinde)
@@ -511,15 +528,42 @@ const FACTORY = {
     {id:'combi', name:'Combidämpfer · Daten bitte einpflegen', einheit:'Garvorgang', plural:'Garvorgänge', wasser:true, schaetz:false,
      posten:[{name:'Combi-Reiniger (Preis und Gebinde bitte einpflegen)', preis:0, je:1}]},
     {id:'espresso', name:'Espressomaschinen · Daten bitte einpflegen', einheit:'Bezug', plural:'Bezüge', wasser:true, schaetz:false, posten:[]},
-    {id:'eis', name:'Eismaschinen · Daten bitte einpflegen', einheit:'kg Eis', plural:'kg Eis', wasser:false, schaetz:false, posten:[]},
-    {id:'softeis', name:'Softeismaschinen · Daten bitte einpflegen', einheit:'Portion', plural:'Portionen', wasser:false, schaetz:false, posten:[]}
+    /* Eismaschinen (Speiseeis/Batch-Freezer/Pasteur): kein Verbrauchsmaterial im Stölner-Angebot.
+       platzhalterMenge:true = der Mengenregler ist nur ein Startwert für die Anzeige je Einheit;
+       die Monatsrate haengt in dieser Kategorie NICHT von der Menge ab (keine mengenabhaengigen Posten). */
+    {id:'eis', name:'Eismaschinen (Speiseeis)', einheit:'kg Eis', plural:'kg Eis', wasser:false, schaetz:false, wgMax:200, platzhalterMenge:true, posten:[]},
+    /* Softeis: Stölner bietet in dieser Kategorie kein Verbrauchsmaterial an – posten bleibt bewusst leer.
+       wgMax = Höchstwert des Reglers "Portionen je Tag" (Standard 80; Startwert je Modell über wg) */
+    {id:'softeis', name:'Softeismaschinen', einheit:'Portion', plural:'Portionen', wasser:false, schaetz:false, wgMax:300, platzhalterMenge:true, posten:[]}
   ],
   /* wartung = Wartungsaufgaben in €/Jahr je Modell (fließt in Kauf und Miete ein; 0 = keine separaten Wartungskosten) */
   models: [
     {id:'o31', kat:'spueler', name:'Ocean 31.DE · Gläserspüler', geraet:2120, wasser:2.8, wartung:0, wg:24},
     {id:'o41', kat:'spueler', name:'Ocean 41.DE · Gläserspüler groß (Beispieldaten)', geraet:2590, wasser:3.1, wartung:0, wg:30},
     {id:'o61', kat:'spueler', name:'Ocean 61.CDE · Geschirrspüler', geraet:3943, wasser:6.8, wartung:0, wg:18},
-    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, wartung:0, wg:40}
+    {id:'o80', kat:'spueler', name:'Ocean 80 · Haubenspüler (Beispieldaten)', geraet:7490, wasser:8.4, wartung:0, wg:40},
+    /* Softeismaschinen Gelmatic · Listenpreise netto lt. shop.stoelner.at, Stand 08.09.2026
+       Bei mehreren Varianten (luft-/wassergekühlt, Farben) weist der Shop denselben Listenpreis aus.
+       wartung:0 = keine separaten Wartungskosten hinterlegt · wg = Startwert Portionen/Tag, vom AD am Regler anpassbar */
+    {id:'sbc1', kat:'softeis', name:'BC EASY1 PM · 1 Sorte', geraet:12600, wasser:0, wartung:900, wg:100},
+    {id:'sgio', kat:'softeis', name:'Giotto 11', geraet:13200, wasser:0, wartung:900, wg:100},
+    {id:'smc1', kat:'softeis', name:'MC EASY1 PM', geraet:14750, wasser:0, wartung:900, wg:100},
+    {id:'shc1', kat:'softeis', name:'HC EASY1 PM', geraet:16450, wasser:0, wartung:900, wg:120},
+    {id:'sbc2', kat:'softeis', name:'BC EASY2 PM · 2 Sorten + Mix', geraet:19450, wasser:0, wartung:1095, wg:120},
+    {id:'sbv2', kat:'softeis', name:'BV EASY2 PM · 2 Sorten + Mix', geraet:20900, wasser:0, wartung:1095, wg:120},
+    {id:'smv2', kat:'softeis', name:'MV EASY2 PM', geraet:27300, wasser:0, wartung:1095, wg:150},
+    {id:'shv2', kat:'softeis', name:'HV EASY2 PM', geraet:30150, wasser:0, wartung:1095, wg:150},
+    {id:'smv2k', kat:'softeis', name:'MV EASY2 Kolor', geraet:31150, wasser:0, wartung:1095, wg:150},
+    {id:'setoi', kat:'softeis', name:'Etoile Gel Plus PM · 3 Sorten + 2 Mix, bis 70 kg/h', geraet:34200, wasser:0, wartung:1240, wg:200},
+    {id:'ssb', kat:'softeis', name:'Selbstbedienungs-Softeismaschine', geraet:48553, wasser:0, wartung:0, wg:200},
+    /* Speiseeis · Liste und Aktion netto lt. Erhebungsbogen Stölner vom 07.10.2026 (Aktion = Liste minus 15 %)
+       wartung lt. Erhebungsbogen 1.340 €/Jahr; wg = Platzhalter kg/Tag, ohne Einfluss auf die Monatsrate */
+    {id:'emul', kat:'eis', name:'Multy TTi', geraet:46900, aktion:39865, wasser:0, wartung:1340, wg:20},
+    {id:'epas', kat:'eis', name:'Pasteur Sweety TTi', geraet:26275, aktion:22333.75, wasser:0, wartung:590, wg:20},
+    {id:'esm4', kat:'eis', name:'Kombimaschine Smarty 4 TTi · Standmodell', geraet:29600, aktion:25160, wasser:0, wartung:1340, wg:20},
+    {id:'esm7', kat:'eis', name:'Kombimaschine Smarty 7 TTi · Standmodell', geraet:43200, aktion:36720, wasser:0, wartung:1340, wg:30},
+    {id:'esm12', kat:'eis', name:'Kombimaschine Smarty 12 TTi · Standmodell', geraet:53700, aktion:45645, wasser:0, wartung:1340, wg:40},
+    {id:'esm16', kat:'eis', name:'Kombimaschine Smarty 16 TTi · Standmodell', geraet:63600, aktion:54060, wasser:0, wartung:1340, wg:50}
   ],
   /* Rundumschutz-Staffel nach netto Listenpreis – über der höchsten Stufe entfällt der Rundumschutz */
   schutzStaffel: [
@@ -536,6 +580,10 @@ const FACTORY = {
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar
      Übernahme nach Vertragsende: immer eine Monatsrate (laufzeitabhängig), kein Fixbetrag */
+  /* Saisonmiete: gleiche Jahressumme wie die 60-Monats-Miete, aber nur in saisonMonate Monaten je Jahr fällig.
+     zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
+     Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
+  saisonMonate: 8, zuschlagSaison: 0,
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
   leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
@@ -563,13 +611,19 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin','aktionsHinweis','agbUrl','leadBonus'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
 function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(CONFIG)); } catch(e){} }
 function loadLocal(){ try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+
+/* Zahlmonate je Jahr bei Saisonmiete – 1 bis 12, Standard 8 */
+function saisonM(){
+  const m = +CONFIG.saisonMonate || 8;
+  return Math.min(12, Math.max(1, m));
+}
 
 function selectedKat(){
   return CONFIG.kategorien.find(k => k.id === $('katSel').value) || CONFIG.kategorien[0];
@@ -620,7 +674,14 @@ function selectedWater(){
 
 function loadModelFields(){
   const m = selectedModel();
-  $('pGeraet').value = m.geraet;
+  /* Regler-Höchstwert zuerst setzen – sonst würde ein höherer Startwert auf das alte Maximum gekappt */
+  $('wg').max = selectedKat().wgMax || 80;
+  /* Preisbasis: Aktionspreis nur verwenden, wenn fuer dieses Modell einer hinterlegt ist */
+  const basisJetzt = $('preisbasis').value;
+  $('pGeraet').value = (basisJetzt === 'liste' || !m.aktion) ? m.geraet : m.aktion;
+  $('geraetBasisHint').textContent = m.aktion
+    ? 'Hinterlegt: Liste ' + eur.format(m.geraet) + ' · Aktion ' + eur.format(m.aktion)
+    : 'Hinterlegt: Liste ' + eur.format(m.geraet) + ' · kein Aktionspreis';
   $('pWasser').value = m.wasser;
   $('pWartung').value = m.wartung || 0;
   $('wg').value = m.wg;
@@ -671,13 +732,19 @@ function currentConfig(){
     dh: +$('dh').value, wp: +$('wp').value,
     /* Flatrate: keine Mindestlaufzeit – Rate wie Beispielrechnung laufzeitunabhängig auf 60 Monate amortisiert */
     flat: $('runtime').value === 'flat',
-    L: $('runtime').value === 'flat' ? 60 : +$('runtime').value,
+    /* Saisonmiete: Betrachtung wie 60 Monate, Zahlung nur in der Saison */
+    saison: $('runtime').value === 'saison',
+    saisonMonate: saisonM(),
+    saisonFaktor: $('runtime').value === 'saison' ? 12 / saisonM() : 1,
+    L: ($('runtime').value === 'flat' || $('runtime').value === 'saison') ? 60 : +$('runtime').value,
     waterId: hatWasser ? wo.id : '', waterName: hatWasser ? wo.name : '', basis,
     filter: hatWasser ? ((basis === 'liste' ? wo.liste : wo.aktion) || 0) : 0,
     iq: (hatWasser && wo.iq) ? ((basis === 'liste' ? CONFIG.iqMeter.liste : CONFIG.iqMeter.aktion) || 0) : 0,
     kart: hatWasser ? (wo.wechsel || 0) : 0, kap: hatWasser ? (wo.kap || 0) : 0,
     osmose: hatWasser && !(wo.kap > 0),
-    zuschlag: ($('runtime').value === 'flat' ? (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag) : CONFIG.zuschlag)/100,
+    zuschlag: ($('runtime').value === 'flat' ? (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)
+              : $('runtime').value === 'saison' ? CONFIG.zuschlag + (CONFIG.zuschlagSaison || 0)
+              : CONFIG.zuschlag)/100,
     kwh: CONFIG.kwh, strom: CONFIG.strom
   };
 }
@@ -696,7 +763,8 @@ function compute(c){
   const wartungK = (c.wartung || 0) * c.L / 12;
   const lauf = kartN * c.kart + postenKosten + wartungK;
   const total = invest + lauf;
-  const rate = total / c.L * (1 + c.zuschlag);
+  /* Saisonfaktor: dieselbe Jahressumme auf weniger Zahlmonate verteilt (1 = ganzjährige Zahlung) */
+  const rate = total / c.L * (1 + c.zuschlag) * (c.saisonFaktor || 1);
   const waterPerWash = litersPerWash/1000 * c.wp;
   const stromPerWash = c.kwh * c.strom;
   return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
@@ -743,17 +811,18 @@ function drawChart(c, r){
 }
 
 function shareUrl(c){
-  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, wt:c.wartung, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.L), md:mode});
+  const p = new URLSearchParams({kat:c.katId, m:c.model, g:c.geraet, wa:c.wasser, wt:c.wartung, wo:c.waterId, pb:c.basis, d:c.days, w:c.wg, h:c.dh, wp:c.wp, L:(c.flat ? 'flat' : c.saison ? 'saison' : c.L), md:mode});
   return location.origin + location.pathname + '#' + p.toString();
 }
 
 function buildMail(c, r){
   const lines = ['Guten Tag,','','bitte um ein verbindliches Angebot auf Basis dieser Kalkulation:','',
     'Kategorie: ' + c.katName,
+    'Angebotspreis Gerät netto: ' + eur.format(c.geraet),
     'Modell: ' + c.name,
     (c.hatWasser ? 'Wasseraufbereitung: ' + c.waterName + ' (Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ')' : 'Verbrauch laut Kategorie ' + c.katName),
     'Betrieb: ' + c.days + ' Tage/Woche, ' + c.wg + ' ' + c.plural + '/Tag' + (c.hatWasser ? ', ' + c.dh + ' °dH' : ''),
-    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : 'Laufzeit: ' + c.L + ' Monate'),
+    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : c.saison ? 'Mietmodell: Saisonmiete – ' + c.saisonMonate + ' Zahlmonate je Jahr, 5 Saisonen' : 'Laufzeit: ' + c.L + ' Monate'),
     'Kalkulierte Mietrate: ' + eur2.format(r.rate) + ' / Monat','',
     'Kalkulations-Link: ' + shareUrl(c),'','Mit freundlichen Grüßen'];
   $('btnMail').href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Angebotsanfrage Mietkalkulator: ' + c.name) +
@@ -777,6 +846,22 @@ function calc(){
   $('chips').hidden = !kat.schaetz;
   $('segMode').hidden = !kat.schaetz;
   $('wgLabel').textContent = c.plural + ' je Tag';
+  $('mengeHint').hidden = !kat.platzhalterMenge;
+
+  /* Angebotspreis gegen die hinterlegten Preise stellen – Basis der gesamten Mietkalkulation */
+  const mdl = selectedModel();
+  const basisPreis = ($('preisbasis').value === 'liste' || !mdl.aktion) ? mdl.geraet : mdl.aktion;
+  const rh = $('rabattHint');
+  if (!mdl.geraet || mdl.id === '__free'){
+    rh.textContent = ''; rh.style.color = '';
+  } else {
+    const abw = c.geraet - basisPreis;
+    const qListe = c.geraet / mdl.geraet * 100;
+    rh.textContent = 'Angebotspreis = ' + qListe.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' % der Liste'
+      + (Math.abs(abw) < 0.5 ? ' · entspricht der Preisbasis'
+         : ' · ' + (abw < 0 ? '−' : '+') + eur.format(Math.abs(abw)) + ' gegenüber der Preisbasis');
+    rh.style.color = qListe < 100 ? 'var(--magenta)' : 'var(--ink)';
+  }
   $('pWasserLabel').textContent = 'Wasser je ' + c.einheit + ' (l)';
   $('einheitH2').textContent = 'Was kostet ein ' + c.einheit + '?';
   $('einheitCtLabel').textContent = 'je ' + c.einheit;
@@ -788,7 +873,8 @@ function calc(){
   $('dhOut').textContent = c.dh + ' °dH' + (c.osmose ? ' · o. Einfluss' : '');
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
-  $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' + (c.flat ? 'jederzeit kündbar' : c.L + ' Monate');
+  $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' +
+    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · 5 Saisonen' : c.L + ' Monate');
   $('incGeraet').textContent = c.hatWasser ? 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '') : 'Gerät inkl. Zubehör';
   $('incVerbrauch').textContent = c.hatWasser
     ? (c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen')
@@ -799,6 +885,8 @@ function calc(){
   if (c.hatWasser) $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = c.flat
     ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
+    : c.saison
+    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Nach der letzten Saison: Rücknahme oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
     : 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').';
 
   $('kInvest').textContent = eur.format(r.invest);
@@ -807,7 +895,7 @@ function calc(){
   $('kWg').textContent = ct(r.total/r.wgTotal + r.neben);
   $('rate').textContent = eur2.format(r.rate);
   $('stickyVal').textContent = eur2.format(r.rate);
-  $('mTotalLabel').textContent = c.flat ? 'Vergleichswert über 5 Jahre (unbefristet)' : 'Gesamt ' + (c.L === 60 ? '5 Jahre' : c.L + ' Monate');
+  $('mTotalLabel').textContent = c.flat ? 'Vergleichswert über 5 Jahre (unbefristet)' : c.saison ? 'Gesamt 5 Saisonen' : 'Gesamt ' + (c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mTotal').innerHTML = '<b>' + eur.format(r.rate * c.L) + '</b>';
   $('mWg').textContent = ct(r.rate*c.L/r.wgTotal + r.neben);
 
@@ -824,7 +912,7 @@ function calc(){
   $('rows').innerHTML = comp.map(x =>
     '<tr><td><span class="dot" style="background:' + COLORS[x.k] + '"></span>' + x.label + '</td>' +
     '<td>' + ct(x.v) + '</td><td>' + Math.round(x.v/sum*100) + ' %</td></tr>').join('');
-  $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' ' + c.plural + ' in ' + c.L + ' Monaten' + (c.flat ? ' (Flatrate, Betrachtung 5 Jahre)' : '') +
+  $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' ' + c.plural + ' in ' + c.L + ' Monaten' + (c.flat ? ' (Flatrate, Betrachtung 5 Jahre)' : c.saison ? ' (Saisonmiete, Betrachtung 5 Jahre, ' + c.saisonMonate + ' Zahlmonate je Jahr)' : '') +
     (r.litersPerWash > 0 ? ' · ' + r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je ' + c.einheit : '') +
     (c.hatWasser ? ' · ' + Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') + ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') : '') +
     ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.';
@@ -832,28 +920,30 @@ function calc(){
   /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
   const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
   const vars = [12,24,36,48,60].map(L => ({L, flat:false, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
-  vars.push({L:60, flat:true, r: compute(Object.assign({}, c, {L:60, zuschlag: flatZ}))});
-  const isCur = v => v.flat === c.flat && (v.flat || v.L === c.L);
+  const saisZ = (CONFIG.zuschlag + (CONFIG.zuschlagSaison || 0))/100, sM = saisonM();
+  vars.push({L:60, saison:true, flat:false, r: compute(Object.assign({}, c, {L:60, zuschlag: saisZ, saisonFaktor: 12/sM}))});
+  vars.push({L:60, flat:true, saison:false, r: compute(Object.assign({}, c, {L:60, zuschlag: flatZ, saisonFaktor: 1}))});
+  const isCur = v => !!v.flat === !!c.flat && !!v.saison === !!c.saison && (v.flat || v.saison || v.L === c.L);
   const vcell = (f, cls) => vars.map(v => '<td class="' + (isCur(v) ? 'cur ' : '') + (cls||'') + '">' + f(v) + '</td>').join('');
   $('varTable').innerHTML =
     '<thead><tr><th>Laufzeit</th>' + vars.map(v =>
-      '<th class="' + (isCur(v) ? 'cur' : '') + '"><button type="button" data-l="' + (v.flat ? 'flat' : v.L) + '">' + (v.flat ? 'Flatrate' : v.L + ' Monate') + '</button><div class="hint" style="margin-top:4px">' + (v.flat ? 'jederzeit kündbar' : (v.L/12) + (v.L === 12 ? ' Jahr' : ' Jahre')) + '</div></th>').join('') + '</tr></thead>' +
+      '<th class="' + (isCur(v) ? 'cur' : '') + '"><button type="button" data-l="' + (v.flat ? 'flat' : v.saison ? 'saison' : v.L) + '">' + (v.flat ? 'Flatrate' : v.saison ? 'Saison' : v.L + ' Monate') + '</button><div class="hint" style="margin-top:4px">' + (v.flat ? 'jederzeit kündbar' : v.saison ? sM + ' Monate je Jahr' : (v.L/12) + (v.L === 12 ? ' Jahr' : ' Jahre')) + '</div></th>').join('') + '</tr></thead>' +
     '<tbody>' +
     '<tr><td>Mietrate je Monat</td>' + vcell(v => eur2.format(v.r.rate), 'rate') + '</tr>' +
-    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : eur.format(v.r.rate * v.L)) + '</tr>' +
-    '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct(v.r.rate * v.L / v.r.wgTotal + v.r.neben)) + '</tr>' +
-    '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => v.flat ? '–' : eur.format(v.r.total)) + '</tr>' +
-    '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => v.flat ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
+    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : v.saison ? eur.format(v.r.rate * sM * 5) + ' (5 Saisonen)' : eur.format(v.r.rate * v.L)) + '</tr>' +
+    '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct((v.saison ? v.r.rate * sM * 5 : v.r.rate * v.L) / v.r.wgTotal + v.r.neben)) + '</tr>' +
+    '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : eur.format(v.r.total)) + '</tr>' +
+    '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '<tr><td>danach: Übernahme (= 1 Monatsrate) oder Rücknahme</td>' + vcell(v => eur2.format(v.r.rate)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
-  $('varNote').textContent = 'Spalte anklicken, um Laufzeit bzw. Flatrate zu übernehmen. Je ' + c.einheit + ' inkl. Nebenkosten' +
+  $('varNote').textContent = 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
     '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner oder Übernahme um eine Monatsrate.';
 
   drawChart(c, r);
   buildMail(c, r);
   $('printSummary').innerHTML = 'Kalkulation: ' + c.name + ' · ' + c.days + ' Tage/Woche · ' + c.wg + ' ' + c.plural + '/Tag' +
-    (c.hatWasser ? ' · ' + c.dh + ' °dH' : '') + ' · ' + (c.flat ? 'Flatrate (jederzeit kündbar)' : 'Laufzeit ' + c.L + ' Monate') + ' · Stand ' + new Date().toLocaleDateString('de-AT');
+    (c.hatWasser ? ' · ' + c.dh + ' °dH' : '') + ' · ' + (c.flat ? 'Flatrate (jederzeit kündbar)' : c.saison ? 'Saisonmiete (' + c.saisonMonate + ' Zahlmonate je Jahr)' : 'Laufzeit ' + c.L + ' Monate') + ' · Stand ' + new Date().toLocaleDateString('de-AT');
 }
 
 /* ===== Admin ===== */
@@ -990,6 +1080,8 @@ function renderAdmin(){
   $('aIqL').value = CONFIG.iqMeter.liste;
   $('aZuschlag').value = CONFIG.zuschlag;
   $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
+  $('aSaisonM').value = saisonM();
+  $('aZuschlagSaison').value = CONFIG.zuschlagSaison || 0;
   const stb = document.querySelector('#schutzTable tbody');
   stb.innerHTML = '';
   CONFIG.schutzStaffel.forEach((s, i) => {
@@ -1019,7 +1111,7 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
     $(id).oninput = () => {
       const raw = $(id).value;
@@ -1135,7 +1227,7 @@ $('tabSchaetz').onclick = () => setMode('schaetz');
 sel.onchange = () => { loadModelFields(); calc(); };
 $('katSel').onchange = () => { buildSelect(); loadModelFields(); calc(); };
 $('waterSel').onchange = calc;
-$('preisbasis').onchange = calc;
+$('preisbasis').onchange = () => { loadModelFields(); calc(); };
 ['pGeraet','pWasser','pWartung','days','wg','dh','wp','seats','hours','quiet','perBasket'].forEach(id => $(id).oninput = calc);
 $('runtime').onchange = calc;
 $('btnShare').onclick = () => {
@@ -1196,13 +1288,15 @@ function vertragHtml(c, r, k){
   rows('Inkludierte Leistungen','S\u00e4mtliches Verbrauchsmaterial'+(c.hatWasser ? ' (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')' : (c.posten.length ? ' ('+c.posten.map(p => p.name).join(', ')+')' : ''))+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Technikereinsatz Mo\u2013Fr')+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
   '<h2>3. Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
   '<h2>4. K\u00fcndigung</h2>'+
   '<p>'+(c.flat
     ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden (Flatrate ohne Mindestlaufzeit).'
+    : c.saison
+    ? 'Der Vertrag ist auf f\u00fcnf Saisonen abgeschlossen. Er kann von beiden Seiten zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
     : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
   ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
   '<h2>5. Vertragsende</h2>'+
@@ -1248,7 +1342,7 @@ function leadReportHtml(c, r, lead){
   '<div class="kopf"><div><h1>Deine Mietkalkulation</h1><div style="font-size:12px;color:#555">'+(lead.firma ? lead.firma+' · ' : '')+(lead.name ? lead.name+' · ' : '')+'erstellt am '+heute+'</div></div>'+
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="Stölner" style="height:38px;margin-bottom:8px">' : '<b>Stölner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstraße 9, A-3100 St. Pölten</div></div>'+
   '<p class="rate">'+eur2.format(r.rate)+' / Monat</p>'+
-  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
+  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.saison ? 'Saisonmiete – '+c.saisonMonate+' Zahlmonate je Jahr, Winterpause ohne Rate' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
   '<h2>Deine Konfiguration</h2>'+
   '<table>'+rows('Gerät', c.name)+
   (c.hatWasser ? rows('Wasseraufbereitung', c.waterName+(c.iq > 0 ? ' + iQ Meter' : '')) : '')+
@@ -1283,7 +1377,7 @@ $('btnLead').onclick = () => {
     'Telefon: ' + (lead.tel || '–'),'',
     'Gerät: ' + c.name,
     (c.hatWasser ? 'Wasseraufbereitung: ' + c.waterName : ''),
-    'Rate: ' + eur2.format(r.rate) + ' / Monat (' + (c.flat ? 'Flatrate' : c.L + ' Monate') + ')','',
+    'Rate: ' + eur2.format(r.rate) + ' / Monat (' + (c.flat ? 'Flatrate' : c.saison ? 'Saisonmiete, ' + c.saisonMonate + ' Zahlmonate je Jahr' : c.L + ' Monate') + ')','',
     'Kalkulation: ' + shareUrl(c),'',
     'Bitte um Terminvereinbarung: ' + (CONFIG.leadBonus || 'Wasseranalyse und Bedarfscheck vor Ort')].filter(x => x !== '').join('\r\n');
   location.href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Gratis-Termin Mietkalkulator: ' + (lead.firma || lead.name)) + '&body=' + encodeURIComponent(body);
