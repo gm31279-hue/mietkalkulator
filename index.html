@@ -510,7 +510,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.5';
+const APP_VERSION = '1.1.6';
 const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1279,7 +1279,9 @@ function vertragHtml(c, r, k){
   'h2{page-break-after:avoid;break-after:avoid}'+
   'table,.sig,.kopf{page-break-inside:avoid;break-inside:avoid}'+
   'h2+p,h2+table{page-break-before:avoid}'+
+  /* Absaetze der Vertragspunkte nie ueber den Seitenrand trennen */
   'p{orphans:3;widows:3}'+
+  'h2+p{page-break-inside:avoid;break-inside:avoid}'+
   '.sepa{page-break-inside:avoid;break-inside:avoid;margin-top:26px}'+
   '@media screen and (max-width:620px){.kopf{display:block}.kopf .adr{text-align:left;margin-top:10px}.sig{display:block}.sig div+div{margin-top:30px}}'+
   '@media print{html,body{width:auto}'+
