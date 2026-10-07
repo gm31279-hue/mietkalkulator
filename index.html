@@ -510,7 +510,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.1.2';
 const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1264,7 +1264,8 @@ function vertragHtml(c, r, k){
   const blank = '____________________';
   const rows = (t,v) => '<tr><td>'+t+'</td><td>'+v+'</td></tr>';
   return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Mietvertrag ' + c.name + '</title><style>'+
-  'body{font-family:Arial,Helvetica,sans-serif;color:#191919;max-width:720px;margin:36px auto;line-height:1.55;font-size:13.5px;padding:0 20px}'+
+  '@page{size:A4;margin:18mm 16mm}'+
+  'body{font-family:Arial,Helvetica,sans-serif;color:#191919;max-width:720px;margin:36px auto;line-height:1.55;font-size:13.5px;padding:0 20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
   'h1{font-size:21px;color:#E3007A;margin-bottom:2px}h2{font-size:14px;margin:20px 0 6px}'+
   '.kopf{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #E3007A;padding-bottom:10px;margin-bottom:18px}'+
   '.kopf .adr{font-size:11px;color:#666;text-align:right}'+
@@ -1277,7 +1278,7 @@ function vertragHtml(c, r, k){
   'h2+p,h2+table{page-break-before:avoid}'+
   'p{orphans:3;widows:3}'+
   '.sepaSeite{page-break-before:always;break-before:page}'+
-  '@media print{body{margin:8mm auto}.hinweis{page-break-inside:avoid}}'+
+  '@media print{body{margin:0;max-width:none;padding:0}.hinweis{page-break-inside:avoid}}'+
   '</style></head><body>'+
   '<div class="kopf"><div><h1>Mietvertrag</h1><div style="font-size:12px;color:#555">Vertragsnummer: '+vnr+' &middot; Datum: '+heute+'</div></div>'+
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="St\u00f6lner" style="height:38px;margin-bottom:8px">' : '<b>St\u00f6lner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
@@ -1307,6 +1308,7 @@ function vertragHtml(c, r, k){
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>7. Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
+  '<div class="sig"><div><div class="line">Ort, Datum &middot; St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; '+(k.firma||'Mieter')+'</div></div></div>'+
   '<h2 class="sepaSeite">8. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
@@ -1316,7 +1318,6 @@ function vertragHtml(c, r, k){
   rows('Gl\u00e4ubiger-Identifikationsnummer','wird von der St\u00f6lner Ges.m.b.H. erg\u00e4nzt')+
   rows('Zahlungsart','Wiederkehrende Zahlung \u00b7 monatlich im Voraus \u00b7 '+netto+' zzgl. gesetzlicher USt')+'</table>'+
   '<div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift Kontoinhaber (SEPA-Mandat)</div></div><div></div></div>'+
-  '<div class="sig"><div><div class="line">Ort, Datum &middot; St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; '+(k.firma||'Mieter')+'</div></div></div>'+
   '<p class="hinweis">Vertragsentwurf, erstellt mit dem St\u00f6lner Gastrotechnik-Mietkalkulator am '+heute+'. Dieser Entwurf ersetzt keine Rechtsberatung und wird erst mit beidseitiger Unterschrift der gepr\u00fcften Endfassung wirksam.</p>'+
   '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
 }
