@@ -1,0 +1,329 @@
+{
+  "version": 4,
+  "kategorien": [
+    {
+      "id": "spueler",
+      "name": "Spülmaschinen",
+      "einheit": "Spülgang",
+      "plural": "Spülgänge",
+      "wasser": true,
+      "schaetz": true,
+      "posten": [
+        {
+          "name": "Spülmittel Professional Clean 12 kg",
+          "preis": 92,
+          "je": 4000
+        },
+        {
+          "name": "Glanztrockner Professional dry 12 kg",
+          "preis": 96,
+          "je": 40000
+        }
+      ]
+    },
+    {
+      "id": "combi",
+      "name": "Combidämpfer · Daten bitte einpflegen",
+      "einheit": "Garvorgang",
+      "plural": "Garvorgänge",
+      "wasser": true,
+      "schaetz": false,
+      "posten": [
+        {
+          "name": "Combi-Reiniger (Preis und Gebinde bitte einpflegen)",
+          "preis": 0,
+          "je": 1
+        }
+      ]
+    },
+    {
+      "id": "espresso",
+      "name": "Espressomaschinen · Daten bitte einpflegen",
+      "einheit": "Bezug",
+      "plural": "Bezüge",
+      "wasser": true,
+      "schaetz": false,
+      "posten": []
+    },
+    {
+      "id": "eis",
+      "name": "Eismaschinen (Speiseeis)",
+      "einheit": "kg Eis",
+      "plural": "kg Eis",
+      "wasser": false,
+      "schaetz": false,
+      "wgMax": 200,
+      "platzhalterMenge": true,
+      "posten": []
+    },
+    {
+      "id": "softeis",
+      "name": "Softeismaschinen",
+      "einheit": "Portion",
+      "plural": "Portionen",
+      "wasser": false,
+      "schaetz": false,
+      "wgMax": 300,
+      "platzhalterMenge": true,
+      "posten": []
+    }
+  ],
+  "models": [
+    {
+      "id": "o31",
+      "kat": "spueler",
+      "name": "Ocean 31.DE · Gläserspüler",
+      "geraet": 2120,
+      "wasser": 2.8,
+      "wartung": 0,
+      "wg": 24
+    },
+    {
+      "id": "o41",
+      "kat": "spueler",
+      "name": "Ocean 41.DE · Gläserspüler groß (Beispieldaten)",
+      "geraet": 2590,
+      "wasser": 3.1,
+      "wartung": 0,
+      "wg": 30
+    },
+    {
+      "id": "o61",
+      "kat": "spueler",
+      "name": "Ocean 61.CDE · Geschirrspüler",
+      "geraet": 3943,
+      "wasser": 6.8,
+      "wartung": 0,
+      "wg": 18
+    },
+    {
+      "id": "o80",
+      "kat": "spueler",
+      "name": "Ocean 80 · Haubenspüler (Beispieldaten)",
+      "geraet": 7490,
+      "wasser": 8.4,
+      "wartung": 0,
+      "wg": 40
+    },
+    {
+      "id": "sbc1",
+      "kat": "softeis",
+      "name": "BC EASY1 PM · 1 Sorte",
+      "geraet": 12600,
+      "wasser": 0,
+      "wartung": 900,
+      "wg": 100
+    },
+    {
+      "id": "sgio",
+      "kat": "softeis",
+      "name": "Giotto 11",
+      "geraet": 13200,
+      "wasser": 0,
+      "wartung": 900,
+      "wg": 100
+    },
+    {
+      "id": "smc1",
+      "kat": "softeis",
+      "name": "MC EASY1 PM",
+      "geraet": 14750,
+      "wasser": 0,
+      "wartung": 900,
+      "wg": 100
+    },
+    {
+      "id": "shc1",
+      "kat": "softeis",
+      "name": "HC EASY1 PM",
+      "geraet": 16450,
+      "wasser": 0,
+      "wartung": 900,
+      "wg": 120
+    },
+    {
+      "id": "sbc2",
+      "kat": "softeis",
+      "name": "BC EASY2 PM · 2 Sorten + Mix",
+      "geraet": 19450,
+      "wasser": 0,
+      "wartung": 1095,
+      "wg": 120
+    },
+    {
+      "id": "sbv2",
+      "kat": "softeis",
+      "name": "BV EASY2 PM · 2 Sorten + Mix",
+      "geraet": 20900,
+      "wasser": 0,
+      "wartung": 1095,
+      "wg": 120
+    },
+    {
+      "id": "smv2",
+      "kat": "softeis",
+      "name": "MV EASY2 PM",
+      "geraet": 27300,
+      "wasser": 0,
+      "wartung": 1095,
+      "wg": 150
+    },
+    {
+      "id": "shv2",
+      "kat": "softeis",
+      "name": "HV EASY2 PM",
+      "geraet": 30150,
+      "wasser": 0,
+      "wartung": 1095,
+      "wg": 150
+    },
+    {
+      "id": "smv2k",
+      "kat": "softeis",
+      "name": "MV EASY2 Kolor",
+      "geraet": 31150,
+      "wasser": 0,
+      "wartung": 1095,
+      "wg": 150
+    },
+    {
+      "id": "setoi",
+      "kat": "softeis",
+      "name": "Etoile Gel Plus PM · 3 Sorten + 2 Mix, bis 70 kg/h",
+      "geraet": 34200,
+      "wasser": 0,
+      "wartung": 1240,
+      "wg": 200
+    },
+    {
+      "id": "ssb",
+      "kat": "softeis",
+      "name": "Selbstbedienungs-Softeismaschine",
+      "geraet": 48553,
+      "wasser": 0,
+      "wartung": 0,
+      "wg": 200
+    },
+    {
+      "id": "emul",
+      "kat": "eis",
+      "name": "Multy TTi",
+      "geraet": 46900,
+      "aktion": 39865,
+      "wasser": 0,
+      "wartung": 1340,
+      "wg": 20
+    },
+    {
+      "id": "epas",
+      "kat": "eis",
+      "name": "Pasteur Sweety TTi",
+      "geraet": 26275,
+      "aktion": 22333.75,
+      "wasser": 0,
+      "wartung": 590,
+      "wg": 20
+    },
+    {
+      "id": "esm4",
+      "kat": "eis",
+      "name": "Kombimaschine Smarty 4 TTi · Standmodell",
+      "geraet": 29600,
+      "aktion": 25160,
+      "wasser": 0,
+      "wartung": 1340,
+      "wg": 20
+    },
+    {
+      "id": "esm7",
+      "kat": "eis",
+      "name": "Kombimaschine Smarty 7 TTi · Standmodell",
+      "geraet": 43200,
+      "aktion": 36720,
+      "wasser": 0,
+      "wartung": 1340,
+      "wg": 30
+    },
+    {
+      "id": "esm12",
+      "kat": "eis",
+      "name": "Kombimaschine Smarty 12 TTi · Standmodell",
+      "geraet": 53700,
+      "aktion": 45645,
+      "wasser": 0,
+      "wartung": 1340,
+      "wg": 40
+    },
+    {
+      "id": "esm16",
+      "kat": "eis",
+      "name": "Kombimaschine Smarty 16 TTi · Standmodell",
+      "geraet": 63600,
+      "aktion": 54060,
+      "wasser": 0,
+      "wartung": 1340,
+      "wg": 50
+    }
+  ],
+  "schutzStaffel": [
+    {
+      "bis": 1667,
+      "preis": 249
+    },
+    {
+      "bis": 8333,
+      "preis": 399
+    },
+    {
+      "bis": 12500,
+      "preis": 579
+    }
+  ],
+  "water": [
+    {
+      "id": "c1100",
+      "name": "C1100 Clean",
+      "aktion": 395,
+      "liste": 395,
+      "wechsel": 204,
+      "kap": 9000,
+      "iq": true,
+      "tipp": "C1100 Clean: normales Spülergebnis, reduziert Chemie und verhindert Korrosion."
+    },
+    {
+      "id": "c1100x",
+      "name": "C1100 Clean Extra",
+      "aktion": 395,
+      "liste": 395,
+      "wechsel": 204,
+      "kap": 9000,
+      "iq": true,
+      "tipp": "C1100 Clean Extra: für polierfreie Gläser, z. B. Weingläser."
+    },
+    {
+      "id": "osmose",
+      "name": "Osmose ohne Tank",
+      "aktion": 1600,
+      "liste": 2160,
+      "wechsel": 305,
+      "kap": 0,
+      "iq": false,
+      "tipp": "Osmose: für das perfekte Ergebnis oder sehr schlechtes Wasser · härteunabhängig, iQ Meter entfällt."
+    }
+  ],
+  "iqMeter": {
+    "aktion": 115,
+    "liste": 164
+  },
+  "aktionsHinweis": "Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.",
+  "saisonMonate": 8,
+  "zuschlagSaison": 10,
+  "zuschlag": 15,
+  "zuschlagFlat": 30,
+  "kwh": 0,
+  "strom": 0.25,
+  "agbUrl": "https://www.stoelner.at/agb",
+  "leadBonus": "Kostenlose Wasseranalyse und Bedarfscheck vor Ort",
+  "email": "office@stoelner.at",
+  "pin": "720"
+}
