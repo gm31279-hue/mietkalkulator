@@ -510,7 +510,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -518,7 +518,7 @@ const APP_STAND = '07.10.2026';
    wasser:true = Kategorie nutzt Wasseraufbereitung (Filter/Kartuschen/Osmose, iQ, Wasserhärte) · schaetz:true = Bedarfsschätzung aus dem Betrieb
    Modelle: wasser = Liter je Einheit · kap (Wasseroption) = Kartuschen-Kapazität in l bei 10 °dH (0 = härteunabhängig, Wechsel 1× jährlich) */
 const FACTORY = {
-  version: 3,
+  version: 4,
   kategorien: [
     {id:'spueler', name:'Spülmaschinen', einheit:'Spülgang', plural:'Spülgänge', wasser:true, schaetz:true,
      posten:[
@@ -599,6 +599,7 @@ const num = v => v.toLocaleString('de-AT');
 const clone = o => JSON.parse(JSON.stringify(o));
 
 let CONFIG = clone(FACTORY);
+let katalogErneuert = false;
 let admin = false;
 let mode = 'direkt';
 const sel = $('model');
@@ -1124,6 +1125,7 @@ function bindAdminGlobals(){
 }
 
 function setAdmin(on){
+  if (on && katalogErneuert) alert('Hinweis: Die auf diesem Gerät gespeicherte Konfiguration stammte aus einer älteren Version. Kategorien und Modelle wurden auf den veröffentlichten Stand gesetzt; Ihre lokalen Preis- und Konditionswerte sind erhalten geblieben.');
   admin = on;
   $('adminBar').hidden = !on;
   $('adminPanel').hidden = !on;
@@ -1437,7 +1439,18 @@ fetch('config.json', {cache:'no-store'})
   .then(remote => {
     if (remote) CONFIG = mergeConfig(FACTORY, remote);
     const local = loadLocal();
-    if (local) CONFIG = mergeConfig(CONFIG, local);
+    if (local){
+      /* Katalog-Update: Stammt die lokal gespeicherte Konfiguration aus einer älteren
+         Programmversion, werden Kategorien und Modelle aus dem Code übernommen.
+         Lokale Preis- und Konditionsänderungen bleiben erhalten. */
+      if ((+local.version || 0) < FACTORY.version){
+        delete local.kategorien; delete local.models; delete local.water;
+        local.version = FACTORY.version;
+        katalogErneuert = true;
+      }
+      CONFIG = mergeConfig(CONFIG, local);
+      if (katalogErneuert) saveLocal();
+    }
     start();
   });
 
