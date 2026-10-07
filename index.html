@@ -510,7 +510,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.3';
+const APP_VERSION = '1.1.4';
 const APP_STAND = '07.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1266,24 +1266,24 @@ function vertragHtml(c, r, k){
   return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">'+
   '<meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<title>Mietvertrag ' + c.name + '</title><style>'+
-  '@page{size:A4;margin:18mm 16mm}'+
+  '@page{size:A4;margin:0}'+
   'body{font-family:Arial,Helvetica,sans-serif;color:#191919;max-width:720px;margin:36px auto;line-height:1.55;font-size:13.5px;padding:0 20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
   'h1{font-size:21px;color:#E3007A;margin-bottom:2px}h2{font-size:14px;margin:20px 0 6px}'+
   '.kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;border-bottom:2px solid #E3007A;padding-bottom:10px;margin-bottom:18px}'+
   '.kopf .adr{font-size:11px;color:#666;text-align:right;min-width:0}'+
   '.kopf img{max-width:150px;height:auto}'+
   'table{width:100%;border-collapse:collapse;margin:8px 0;table-layout:fixed}td{padding:5px 8px;border:1px solid #ddd;vertical-align:top;overflow-wrap:break-word}td:first-child{width:38%;color:#555}'+
-  '.sig{display:flex;gap:40px;margin-top:46px}.sig div{flex:1}.sig .line{border-top:1px solid #191919;padding-top:5px;font-size:12px;color:#555;margin-top:44px}'+
+  '.sig{display:flex;gap:40px;margin-top:30px;page-break-inside:avoid}.sig div{flex:1}.sig .line{border-top:1px solid #191919;padding-top:5px;font-size:12px;color:#555;margin-top:30px}'+
   '.hinweis{font-size:11px;color:#888;margin-top:26px;border-top:1px solid #ddd;padding-top:8px}'+
   /* Druck: saubere Seitenumbrüche – Überschriften nie allein am Seitenende, Tabellen/Unterschriften nie zerteilt, SEPA-Mandat auf eigener Seite */
   'h2{page-break-after:avoid;break-after:avoid}'+
   'table,.sig,.kopf{page-break-inside:avoid;break-inside:avoid}'+
   'h2+p,h2+table{page-break-before:avoid}'+
   'p{orphans:3;widows:3}'+
-  '.sepaSeite{page-break-before:always;break-before:page}'+
+  '.sepa{page-break-inside:avoid;break-inside:avoid;margin-top:26px}'+
   '@media screen and (max-width:620px){.kopf{display:block}.kopf .adr{text-align:left;margin-top:10px}.sig{display:block}.sig div+div{margin-top:30px}}'+
   '@media print{html,body{width:auto}'+
-  'body{margin:0;max-width:none;padding:0;font-size:10.5pt;line-height:1.45}'+
+  'body{margin:0;max-width:none;padding:16mm 15mm;font-size:10.5pt;line-height:1.45}'+
   'h1{font-size:17pt}h2{font-size:11pt}.kopf .adr{font-size:8.5pt}.hinweis{font-size:8pt;page-break-inside:avoid}'+
   '.sig .line{font-size:9pt}.kopf img{max-width:38mm}}'+
   '</style></head><body>'+
@@ -1291,7 +1291,7 @@ function vertragHtml(c, r, k){
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="St\u00f6lner" style="height:38px;margin-bottom:8px">' : '<b>St\u00f6lner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstra\u00dfe 9, A-3100 St. P\u00f6lten<br>FN 95392h &middot; UID ATU19797904</div></div>'+
   '<h2>1. Vertragsparteien</h2>'+
   '<table>'+rows('Vermieterin','St\u00f6lner Ges.m.b.H., Burggasse 120, A-1070 Wien')+
-  rows('Mieter', (k.firma||'____________________')+'<br>vertreten durch: '+(k.name||'____________________')+'<br>'+(k.adresse||'____________________'))+'</table>'+
+  rows('Mieter', (k.firma||blank)+'<br>vertreten durch: '+(k.name||blank)+(k.adresse ? '<br>'+k.adresse : ''))+'</table>'+
   '<h2>2. Mietgegenstand und Leistungsumfang</h2>'+
   '<table>'+rows('Ger\u00e4t', c.name)+
   rows('Inkludiertes Zubeh\u00f6r', c.hatWasser ? 'Wasseraufbereitung '+c.waterName+(c.iq > 0 ? ', iQ Meter' : '') : 'lt. Angebot')+
@@ -1316,7 +1316,7 @@ function vertragHtml(c, r, k){
   '<h2>7. Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
   '<div class="sig"><div><div class="line">Ort, Datum &middot; St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; '+(k.firma||'Mieter')+'</div></div></div>'+
-  '<h2 class="sepaSeite">8. SEPA-Lastschriftmandat</h2>'+
+  '<div class="sepa"><h2>8. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
   rows('IBAN', ibanFmt(k.iban) || blank)+
@@ -1324,7 +1324,7 @@ function vertragHtml(c, r, k){
   rows('Mandatsreferenz', vnr)+
   rows('Gl\u00e4ubiger-Identifikationsnummer','wird von der St\u00f6lner Ges.m.b.H. erg\u00e4nzt')+
   rows('Zahlungsart','Wiederkehrende Zahlung \u00b7 monatlich im Voraus \u00b7 '+netto+' zzgl. gesetzlicher USt')+'</table>'+
-  '<div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift Kontoinhaber (SEPA-Mandat)</div></div><div></div></div>'+
+  '<div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift Kontoinhaber (SEPA-Mandat)</div></div><div></div></div></div>'+
   '<p class="hinweis">Vertragsentwurf, erstellt mit dem St\u00f6lner Gastrotechnik-Mietkalkulator am '+heute+'. Dieser Entwurf ersetzt keine Rechtsberatung und wird erst mit beidseitiger Unterschrift der gepr\u00fcften Endfassung wirksam.</p>'+
   '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
 }
