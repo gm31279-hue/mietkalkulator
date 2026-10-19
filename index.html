@@ -361,7 +361,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
     <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
     <div><label for="aGebJahre">Bemessung bei unbefristet (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
-    <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Übernahme nach Vertragsende: automatisch eine Monatsrate (laufzeitabhängig).</div>
+    <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Nach Vertragsende: Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.</div>
   </div>
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
@@ -431,7 +431,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <tr><td class="inc" id="mTotalLabel">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc" id="mWgLabel">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
         </table>
-        <p class="note" id="endNote">Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um 240 €.</p>
+        <p class="note" id="endNote">Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.</p>
       </div>
     </div>
 
@@ -516,7 +516,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.3.0';
 const APP_STAND = '19.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -585,7 +585,8 @@ const FACTORY = {
   iqMeter: {aktion:115, liste:164},
   aktionsHinweis: 'Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.',
   /* zuschlagFlat: Aufschlag für jederzeitige Kündbarkeit – Vorschlag 30 % (Flatrate ≈ knapp über 48-Monats-Rate), im Admin änderbar
-     Übernahme nach Vertragsende: immer eine Monatsrate (laufzeitabhängig), kein Fixbetrag */
+     Nach Vertragsende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Kaufpreis wird
+     unabhängig von der Miete vereinbart – es gibt bewusst KEINE kalkulierte Kaufoption. */
   /* Saisonmiete: gleiche Jahressumme wie die 60-Monats-Miete, aber nur in saisonMonate Monaten je Jahr fällig.
      zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
      Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
@@ -911,10 +912,10 @@ function calc(){
   $('leadBonusTxt').textContent = CONFIG.leadBonus || 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort';
   if (c.hatWasser) $('waterHint').textContent = ((selectedWater().tipp || '') + ' ' + (CONFIG.aktionsHinweis || '')).trim();
   $('endNote').textContent = c.flat
-    ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
+    ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
     : c.saison
-    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Nach der letzten Saison: Rücknahme oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').'
-    : 'Nach Laufzeitende: Rücknahme durch Stölner oder Übernahme um eine Monatsrate (' + eur2.format(r.rate) + ').';
+    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Nach der letzten Saison: Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
+    : 'Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.';
 
   $('kInvest').textContent = eur.format(r.invest);
   $('kLauf').textContent = eur.format(r.lauf);
@@ -972,11 +973,10 @@ function calc(){
     '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct((v.saison ? v.r.rate * sM * 5 : v.r.rate * v.L) / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : eur.format(v.r.total)) + '</tr>' +
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
-    '<tr><td>danach: Übernahme (= 1 Monatsrate) oder Rücknahme</td>' + vcell(v => eur2.format(v.r.rate)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
   $('varNote').textContent = 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
-    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner oder Übernahme um eine Monatsrate.';
+    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner. Ein Kauf des Geräts ist möglich, der Kaufpreis wird unabhängig von der Miete vereinbart.';
 
   drawChart(c, r);
   buildMail(c, r);
@@ -1301,7 +1301,6 @@ function vertragHtml(c, r, k){
   const logoSrc = headerImg ? headerImg.src : '';
   const agb = CONFIG.agbUrl || '';
   const netto = eur2.format(r.rate);
-  const ende = 'einer Monatsrate (' + eur2.format(r.rate) + ')';
   const monate = c.L;
   const vnr = 'SPK-' + Date.now().toString(36).toUpperCase();
   const blank = '____________________';
@@ -1365,7 +1364,7 @@ function vertragHtml(c, r, k){
     : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
   ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
   '<h2>5. Vertragsende</h2>'+
-  '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer bzw. nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Alternativ kann der Mieter das Ger\u00e4t gegen eine einmalige Abschlusszahlung in H\u00f6he '+ende+' zzgl. USt in sein Eigentum \u00fcbernehmen.</p>'+
+  '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer bzw. nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Der Mieter ist nicht verpflichtet, das Ger\u00e4t zu erwerben, und hat aus diesem Vertrag keinen Anspruch auf Erwerb. Ein Kauf ist m\u00f6glich; ein allf\u00e4lliger Kaufpreis wird in diesem Fall gesondert und unabh\u00e4ngig von diesem Mietvertrag vereinbart.</p>'+
   '<h2>6. Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
   '<h2>7. Sonstiges</h2>'+
@@ -1422,7 +1421,7 @@ function leadReportHtml(c, r, lead){
   rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+((c.hatWasser || c.posten.length) ? ', Verbrauchsmaterial' : '')+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Techniker Mo–Fr')+
   ((!c.hatWasser && !c.posten.length) ? rows('Nicht inklusive', 'Verbrauchsmaterial') : '')+
   (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig, gesondert ausgewiesen, Einzug mit der 1. Rate')) : '')+
-  rows('Nach Vertragsende', 'Rücknahme kostenlos oder Übernahme um eine Monatsrate')+'</table>'+
+  rows('Nach Vertragsende', 'Rücknahme kostenlos · ein Kauf ist möglich, der Preis wird gesondert vereinbart')+'</table>'+
   '<h2>Alle Laufzeiten im Überblick</h2>'+
   '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+'<th>Flatrate</th></tr>'+
   '<tr><td>Miete je Monat</td>'+vars.map(v => '<td><b>'+eur2.format(v.r.rate)+'</b></td>').join('')+'<td><b>'+eur2.format(flat.rate)+'</b></td></tr>'+
