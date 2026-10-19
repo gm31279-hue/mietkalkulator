@@ -359,7 +359,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aSaisonM">Saisonmiete: Zahlmonate je Jahr</label><input type="number" id="aSaisonM" min="1" max="12" step="1"></div>
     <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
     <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
-    <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · einmalig zusätzlich</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
+    <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
     <div><label for="aGebJahre">Bemessung bei unbefristet (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
     <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Übernahme nach Vertragsende: automatisch eine Monatsrate (laufzeitabhängig).</div>
   </div>
@@ -516,7 +516,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 const APP_STAND = '19.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -900,7 +900,8 @@ function calc(){
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' +
-    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · 5 Saisonen' : c.L + ' Monate');
+    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · 5 Saisonen' : c.L + ' Monate') +
+    ((r.gebuehr > 0 && !r.gebInRate) ? ' · 1. Einzug ' + eur2.format(r.rate + r.gebuehr) + ' (Rate + Gebühr)' : '');
   $('incGeraet').textContent = c.hatWasser ? 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '') : 'Gerät inkl. Zubehör';
   $('incVerbrauch').textContent = c.hatWasser
     ? (c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen')
@@ -927,7 +928,7 @@ function calc(){
   if (r.gebuehr > 0){
     $('mGebLabel').textContent = r.gebInRate
       ? 'davon Rechtsgeschäftsgebühr (in der Rate enthalten)'
-      : 'Rechtsgeschäftsgebühr (einmalig, zusätzlich)';
+      : 'Rechtsgeschäftsgebühr · separat, mit der 1. Rate';
     $('mGeb').textContent = eur2.format(r.gebuehr);
   }
   $('mTotal').innerHTML = '<b>' + eur.format(r.rate * c.L) + '</b>';
@@ -952,7 +953,7 @@ function calc(){
     ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.' +
     (r.gebuehr > 0 ? ' · Rechtsgeschäftsgebühr ' + (c.gebuehrSatz).toLocaleString('de-AT') + ' % auf ' +
       (c.flat ? c.gebuehrJahre + ' Jahresentgelte (unbestimmte Dauer)' : 'das Entgelt der vereinbarten Dauer') +
-      ' = ' + eur2.format(r.gebuehr) + (r.gebInRate ? ', in der Rate enthalten' : ', einmalig zusätzlich') : '');
+      ' = ' + eur2.format(r.gebuehr) + (r.gebInRate ? ', in der Rate enthalten' : ', gesondert ausgewiesen und mit der ersten Rate eingezogen') : '');
 
   /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
   const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
@@ -1354,7 +1355,7 @@ function vertragHtml(c, r, k){
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   (r.gebuehr > 0 ? rows('Rechtsgesch\u00e4ftsgeb\u00fchr', r.gebInRate
      ? eur2.format(r.gebuehr)+' \u2013 im Mietentgelt enthalten, wird von der Vermieterin abgef\u00fchrt'
-     : eur2.format(r.gebuehr)+' \u2013 einmalig, zur Zahlung durch den Mieter bei Vertragsabschluss') : '')+
+     : eur2.format(r.gebuehr)+' \u2013 einmalig, gesondert ausgewiesen; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
   '<h2>4. K\u00fcndigung</h2>'+
   '<p>'+(c.flat
@@ -1420,7 +1421,7 @@ function leadReportHtml(c, r, lead){
   rows('Betrieb', c.days+' Tage/Woche · '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ' · '+c.dh+' °dH' : ''))+
   rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+((c.hatWasser || c.posten.length) ? ', Verbrauchsmaterial' : '')+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Techniker Mo–Fr')+
   ((!c.hatWasser && !c.posten.length) ? rows('Nicht inklusive', 'Verbrauchsmaterial') : '')+
-  (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig zusätzlich')) : '')+
+  (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig, gesondert ausgewiesen, Einzug mit der 1. Rate')) : '')+
   rows('Nach Vertragsende', 'Rücknahme kostenlos oder Übernahme um eine Monatsrate')+'</table>'+
   '<h2>Alle Laufzeiten im Überblick</h2>'+
   '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+'<th>Flatrate</th></tr>'+
