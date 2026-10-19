@@ -358,10 +358,15 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
     <div><label for="aSaisonM">Saisonmiete: Zahlmonate je Jahr</label><input type="number" id="aSaisonM" min="1" max="12" step="1"></div>
     <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
+    <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
+    <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · einmalig zusätzlich</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
+    <div><label for="aGebJahre">Bemessung bei unbefristet (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
     <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Übernahme nach Vertragsende: automatisch eine Monatsrate (laufzeitabhängig).</div>
   </div>
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
+
+  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr:</b> Bemessung ist bei vereinbarter Dauer das Entgelt über die gesamte Laufzeit, bei der Flatrate das eingestellte Vielfache des Jahresentgelts. Ob und in welcher Höhe die Gebühr auf diese Verträge anfällt, ist <b>steuerlich noch nicht bestätigt</b> – Satz auf 0 setzen, um die Position überall auszublenden.</p>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Rundumschutz-Staffel (netto Listenpreis)</h3>
   <div style="overflow-x:auto">
@@ -422,6 +427,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incGeraet">Gerät, Wasseraufbereitung, iQ Meter</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incVerbrauch">Spülmittel, Trockner, Kartuschen</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incSchutz">Rundumschutz + Wartung</span></td><td></td></tr>
+          <tr id="mGebRow" hidden><td class="inc" id="mGebLabel">Rechtsgeschäftsgebühr (einmalig)</td><td id="mGeb">–</td></tr>
           <tr><td class="inc" id="mTotalLabel">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc" id="mWgLabel">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
         </table>
@@ -510,8 +516,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.1.6';
-const APP_STAND = '07.10.2026';
+const APP_VERSION = '1.2.0';
+const APP_STAND = '19.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
    Kategorien: einheit = Bezugseinheit (Singular), plural = Mehrzahl · posten = Verbrauchspositionen (preis € je Gebinde, je = Einheiten je Gebinde)
@@ -584,6 +590,11 @@ const FACTORY = {
      zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
      Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
   saisonMonate: 8, zuschlagSaison: 0,
+  /* Rechtsgeschaeftsgebuehr auf Bestandvertraege (Gebührengesetz) – NOCH NICHT steuerlich bestaetigt.
+     gebuehrSatz: Prozent der Bemessungsgrundlage (0 = Position wird nirgends ausgewiesen)
+     gebuehrTraeger: 'mieter' = einmalig zusaetzlich zur Miete · 'miete' = in die Monatsrate eingerechnet
+     gebuehrJahre: Jahresentgelte als Bemessung bei unbestimmter Dauer (Flatrate) */
+  gebuehrSatz: 1, gebuehrTraeger: 'mieter', gebuehrJahre: 3,
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
   leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
@@ -612,8 +623,8 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
-  ['email','pin','aktionsHinweis','agbUrl','leadBonus'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
@@ -746,7 +757,10 @@ function currentConfig(){
     zuschlag: ($('runtime').value === 'flat' ? (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)
               : $('runtime').value === 'saison' ? CONFIG.zuschlag + (CONFIG.zuschlagSaison || 0)
               : CONFIG.zuschlag)/100,
-    kwh: CONFIG.kwh, strom: CONFIG.strom
+    kwh: CONFIG.kwh, strom: CONFIG.strom,
+    gebuehrSatz: Math.min(5, Math.max(0, +CONFIG.gebuehrSatz || 0)),
+    gebuehrTraeger: CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter',
+    gebuehrJahre: Math.min(18, Math.max(1, +CONFIG.gebuehrJahre || 3))
   };
 }
 
@@ -765,10 +779,21 @@ function compute(c){
   const lauf = kartN * c.kart + postenKosten + wartungK;
   const total = invest + lauf;
   /* Saisonfaktor: dieselbe Jahressumme auf weniger Zahlmonate verteilt (1 = ganzjährige Zahlung) */
-  const rate = total / c.L * (1 + c.zuschlag) * (c.saisonFaktor || 1);
+  const sf = c.saisonFaktor || 1;
+  const basisRate = total / c.L * (1 + c.zuschlag) * sf;
+  /* Rechtsgeschaeftsgebuehr: Bemessung = Entgelt der vereinbarten Dauer,
+     bei unbestimmter Dauer (Flatrate) das vielfache Jahresentgelt lt. gebuehrJahre.
+     Traeger 'miete': die Gebuehr ist Teil der Gesamtkosten, die Rate deckt sie mit
+     (rate = basisRate / (1 - Anteil), weil die Gebuehr selbst von der Rate abhaengt). */
+  const gSatz = (c.gebuehrSatz || 0)/100;
+  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? 12 * (c.gebuehrJahre || 3) : (c.saison ? c.saisonMonate * 5 : c.L));
+  const inRate = c.gebuehrTraeger === 'miete' && gSatz > 0;
+  const nenner = 1 - gSatz * gebMonate * (1 + c.zuschlag) * sf / c.L;
+  const rate = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
+  const gebuehr = gSatz > 0 ? rate * gebMonate * gSatz : 0;
   const waterPerWash = litersPerWash/1000 * c.wp;
   const stromPerWash = c.kwh * c.strom;
-  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
+  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, basisRate, gebuehr, gebMonate, gebInRate: inRate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
 }
 
 function drawChart(c, r){
@@ -897,6 +922,14 @@ function calc(){
   $('rate').textContent = eur2.format(r.rate);
   $('stickyVal').textContent = eur2.format(r.rate);
   $('mTotalLabel').textContent = c.flat ? 'Vergleichswert über 5 Jahre (unbefristet)' : c.saison ? 'Gesamt 5 Saisonen' : 'Gesamt ' + (c.L === 60 ? '5 Jahre' : c.L + ' Monate');
+  /* Rechtsgeschäftsgebühr: nur zeigen, wenn ein Satz hinterlegt ist */
+  $('mGebRow').hidden = !(r.gebuehr > 0);
+  if (r.gebuehr > 0){
+    $('mGebLabel').textContent = r.gebInRate
+      ? 'davon Rechtsgeschäftsgebühr (in der Rate enthalten)'
+      : 'Rechtsgeschäftsgebühr (einmalig, zusätzlich)';
+    $('mGeb').textContent = eur2.format(r.gebuehr);
+  }
   $('mTotal').innerHTML = '<b>' + eur.format(r.rate * c.L) + '</b>';
   $('mWg').textContent = ct(r.rate*c.L/r.wgTotal + r.neben);
 
@@ -916,7 +949,10 @@ function calc(){
   $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' ' + c.plural + ' in ' + c.L + ' Monaten' + (c.flat ? ' (Flatrate, Betrachtung 5 Jahre)' : c.saison ? ' (Saisonmiete, Betrachtung 5 Jahre, ' + c.saisonMonate + ' Zahlmonate je Jahr)' : '') +
     (r.litersPerWash > 0 ? ' · ' + r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je ' + c.einheit : '') +
     (c.hatWasser ? ' · ' + Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') + ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') : '') +
-    ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.';
+    ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.' +
+    (r.gebuehr > 0 ? ' · Rechtsgeschäftsgebühr ' + (c.gebuehrSatz).toLocaleString('de-AT') + ' % auf ' +
+      (c.flat ? c.gebuehrJahre + ' Jahresentgelte (unbestimmte Dauer)' : 'das Entgelt der vereinbarten Dauer') +
+      ' = ' + eur2.format(r.gebuehr) + (r.gebInRate ? ', in der Rate enthalten' : ', einmalig zusätzlich') : '');
 
   /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
   const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
@@ -1083,6 +1119,9 @@ function renderAdmin(){
   $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
   $('aSaisonM').value = saisonM();
   $('aZuschlagSaison').value = CONFIG.zuschlagSaison || 0;
+  $('aGebSatz').value = typeof CONFIG.gebuehrSatz === 'number' ? CONFIG.gebuehrSatz : 0;
+  $('aGebTraeger').value = CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter';
+  $('aGebJahre').value = CONFIG.gebuehrJahre || 3;
   const stb = document.querySelector('#schutzTable tbody');
   stb.innerHTML = '';
   CONFIG.schutzStaffel.forEach((s, i) => {
@@ -1112,15 +1151,18 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'],
+               aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
-    $(id).oninput = () => {
+    const handler = () => {
       const raw = $(id).value;
-      const val = (path[0] === 'email' || path[0] === 'pin' || path[0] === 'aktionsHinweis' || path[0] === 'agbUrl' || path[0] === 'leadBonus') ? raw : (+raw || 0);
+      const textFeld = ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger'].indexOf(path[0]) >= 0;
+      const val = textFeld ? raw : (+raw || 0);
       if (path[0] === 'agbUrl') $('agbLink').href = raw || '#';
       if (path.length === 2) CONFIG[path[0]][path[1]] = val; else CONFIG[path[0]] = val;
       saveLocal(); calc();
     };
+    $(id).oninput = handler; $(id).onchange = handler;
   });
 }
 
@@ -1310,6 +1352,9 @@ function vertragHtml(c, r, k){
   '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
+  (r.gebuehr > 0 ? rows('Rechtsgesch\u00e4ftsgeb\u00fchr', r.gebInRate
+     ? eur2.format(r.gebuehr)+' \u2013 im Mietentgelt enthalten, wird von der Vermieterin abgef\u00fchrt'
+     : eur2.format(r.gebuehr)+' \u2013 einmalig, zur Zahlung durch den Mieter bei Vertragsabschluss') : '')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
   '<h2>4. K\u00fcndigung</h2>'+
   '<p>'+(c.flat
@@ -1373,7 +1418,9 @@ function leadReportHtml(c, r, lead){
   '<table>'+rows('Gerät', c.name)+
   (c.hatWasser ? rows('Wasseraufbereitung', c.waterName+(c.iq > 0 ? ' + iQ Meter' : '')) : '')+
   rows('Betrieb', c.days+' Tage/Woche · '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ' · '+c.dh+' °dH' : ''))+
-  rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+', Verbrauchsmaterial, '+(c.schutz > 0 ? 'Rundumschutz, ' : '')+'Wartung, Techniker Mo–Fr')+
+  rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+((c.hatWasser || c.posten.length) ? ', Verbrauchsmaterial' : '')+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Techniker Mo–Fr')+
+  ((!c.hatWasser && !c.posten.length) ? rows('Nicht inklusive', 'Verbrauchsmaterial') : '')+
+  (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig zusätzlich')) : '')+
   rows('Nach Vertragsende', 'Rücknahme kostenlos oder Übernahme um eine Monatsrate')+'</table>'+
   '<h2>Alle Laufzeiten im Überblick</h2>'+
   '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+'<th>Flatrate</th></tr>'+
