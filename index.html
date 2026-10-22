@@ -360,13 +360,15 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
     <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
     <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
-    <div><label for="aGebJahre">Bemessung bei unbefristet (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
+    <div><label for="aGebJahre">Bemessung unbestimmte Dauer (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
+    <div><label for="aUst">USt-Satz in der Bemessung (%)</label><input type="number" id="aUst" min="0" max="30" step="1"></div>
     <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Nach Vertragsende: Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.</div>
   </div>
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
 
-  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr:</b> Bemessung ist bei vereinbarter Dauer das Entgelt über die gesamte Laufzeit, bei der Flatrate das eingestellte Vielfache des Jahresentgelts. Ob und in welcher Höhe die Gebühr auf diese Verträge anfällt, ist <b>steuerlich noch nicht bestätigt</b> – Satz auf 0 setzen, um die Position überall auszublenden.</p>
+  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: Mietdauer + 3 Jahre (der Vertrag verlängert sich danach auf unbestimmte Zeit). Flatrate: 3 Jahresentgelte. Saisonmiete: 5 Saisonen (konservativ – mit dem Steuerberater zu bestätigen). Bemessung bis 150 € ist gebührenfrei.<br>
+  <b>Pflicht der Stölner:</b> Gebühr selbst berechnen und bis zum <b>15. des zweitfolgenden Monats</b> nach Unterzeichnung über FinanzOnline an das Finanzamt Österreich – Dienststelle Sonderzuständigkeiten entrichten (auch wenn der Mieter sie trägt). Den <b>Selbstberechnungsvermerk</b> im Mietvertrag auf jeder Ausfertigung mit Datum ausfüllen und unterschreiben. Satz auf 0 setzen, um die Position überall auszublenden.</p>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Rundumschutz-Staffel (netto Listenpreis)</h3>
   <div style="overflow-x:auto">
@@ -516,8 +518,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.3.0';
-const APP_STAND = '19.10.2026';
+const APP_VERSION = '1.4.0';
+const APP_STAND = '22.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
    Kategorien: einheit = Bezugseinheit (Singular), plural = Mehrzahl · posten = Verbrauchspositionen (preis € je Gebinde, je = Einheiten je Gebinde)
@@ -591,11 +593,14 @@ const FACTORY = {
      zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
      Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
   saisonMonate: 8, zuschlagSaison: 0,
-  /* Rechtsgeschaeftsgebuehr auf Bestandvertraege (Gebührengesetz) – NOCH NICHT steuerlich bestaetigt.
-     gebuehrSatz: Prozent der Bemessungsgrundlage (0 = Position wird nirgends ausgewiesen)
+  /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG) – Grundlage: USP-Merkblatt BMF, Stand 1.1.2026.
+     gebuehrSatz: Prozent der Bemessungsgrundlage (1 %; 0 = Position wird nirgends ausgewiesen)
      gebuehrTraeger: 'mieter' = einmalig zusaetzlich zur Miete · 'miete' = in die Monatsrate eingerechnet
-     gebuehrJahre: Jahresentgelte als Bemessung bei unbestimmter Dauer (Flatrate) */
-  gebuehrSatz: 1, gebuehrTraeger: 'mieter', gebuehrJahre: 3,
+     gebuehrJahre: Jahresentgelte fuer unbestimmte Dauer (gesetzlich 3) – gilt fuer die Flatrate UND fuer die
+       Verlaengerung auf unbestimmte Zeit nach der Mindestlaufzeit (bestimmte Dauer + 3 Jahre)
+     ust: USt-Satz – zaehlt zur Bemessung, weil der Vertrag "zzgl. USt" vereinbart
+     gebuehrFreigrenze: Bemessung bis zu diesem Wert ist gebuehrenfrei (150 €) */
+  gebuehrSatz: 1, gebuehrTraeger: 'mieter', gebuehrJahre: 3, ust: 20, gebuehrFreigrenze: 150,
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
   leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
@@ -624,7 +629,7 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','ust','gebuehrFreigrenze','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
@@ -761,7 +766,9 @@ function currentConfig(){
     kwh: CONFIG.kwh, strom: CONFIG.strom,
     gebuehrSatz: Math.min(5, Math.max(0, +CONFIG.gebuehrSatz || 0)),
     gebuehrTraeger: CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter',
-    gebuehrJahre: Math.min(18, Math.max(1, +CONFIG.gebuehrJahre || 3))
+    gebuehrJahre: Math.min(18, Math.max(1, +CONFIG.gebuehrJahre || 3)),
+    ust: typeof CONFIG.ust === 'number' ? Math.min(30, Math.max(0, CONFIG.ust)) : 20,
+    gebuehrFreigrenze: typeof CONFIG.gebuehrFreigrenze === 'number' ? Math.max(0, CONFIG.gebuehrFreigrenze) : 150
   };
 }
 
@@ -782,19 +789,37 @@ function compute(c){
   /* Saisonfaktor: dieselbe Jahressumme auf weniger Zahlmonate verteilt (1 = ganzjährige Zahlung) */
   const sf = c.saisonFaktor || 1;
   const basisRate = total / c.L * (1 + c.zuschlag) * sf;
-  /* Rechtsgeschaeftsgebuehr: Bemessung = Entgelt der vereinbarten Dauer,
-     bei unbestimmter Dauer (Flatrate) das vielfache Jahresentgelt lt. gebuehrJahre.
+  /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG, USP-Merkblatt Stand 1.1.2026):
+     Bemessung = Monatsentgelt INKL. USt (Vertrag vereinbart "zzgl. USt") × Monate.
+     Monate je Vertragsart – richtet sich nach Punkt 3/4 des Mietvertrags:
+     - Laufzeitmiete: bestimmte Dauer, danach Verlaengerung auf unbestimmte Zeit
+       → vereinbarte Mietdauer + 3 Jahre (gebuehrJahre)
+     - Flatrate: unbestimmte Dauer → 3 Jahresentgelte
+     - Saisonmiete: 5 Saisonen × Zahlmonate (konservativ; steuerlich zu bestaetigen)
+     Bemessung bis zur Freigrenze (150 €) → keine Gebuehr.
      Traeger 'miete': die Gebuehr ist Teil der Gesamtkosten, die Rate deckt sie mit
      (rate = basisRate / (1 - Anteil), weil die Gebuehr selbst von der Rate abhaengt). */
   const gSatz = (c.gebuehrSatz || 0)/100;
-  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? 12 * (c.gebuehrJahre || 3) : (c.saison ? c.saisonMonate * 5 : c.L));
+  const ustF = 1 + (c.ust || 0)/100;
+  const unbestM = 12 * (c.gebuehrJahre || 3);
+  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * 5 : c.L + unbestM));
   const inRate = c.gebuehrTraeger === 'miete' && gSatz > 0;
-  const nenner = 1 - gSatz * gebMonate * (1 + c.zuschlag) * sf / c.L;
+  const nenner = 1 - gSatz * ustF * gebMonate * (1 + c.zuschlag) * sf / c.L;
   const rate = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
-  const gebuehr = gSatz > 0 ? rate * gebMonate * gSatz : 0;
+  const gebBemessung = rate * ustF * gebMonate;
+  const gebuehr = (gSatz > 0 && gebBemessung > (c.gebuehrFreigrenze || 0)) ? Math.round(gebBemessung * gSatz * 100) / 100 : 0;
   const waterPerWash = litersPerWash/1000 * c.wp;
   const stromPerWash = c.kwh * c.strom;
-  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, basisRate, gebuehr, gebMonate, gebInRate: inRate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
+  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, basisRate, gebuehr, gebMonate, gebBemessung, gebUnbestM: unbestM, gebInRate: inRate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
+}
+
+/* Nachvollziehbare Herleitung der Gebuehr – fuer Fusszeile, Mietvertrag und Kalkulations-PDF */
+function gebHerleitung(c, r){
+  const monate = c.flat ? r.gebUnbestM + ' Monate (unbestimmte Dauer, gesetzlich ' + (r.gebUnbestM/12) + ' Jahresentgelte)'
+    : c.saison ? r.gebMonate + ' Zahlmonate (5 Saisonen à ' + c.saisonMonate + ' Monate)'
+    : r.gebMonate + ' Monate (' + c.L + ' Monate Mietdauer + ' + r.gebUnbestM + ' Monate für die anschließende unbestimmte Dauer)';
+  return (c.gebuehrSatz).toLocaleString('de-AT') + ' % von ' + eur2.format(r.gebBemessung) +
+    ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate;
 }
 
 function drawChart(c, r){
@@ -952,8 +977,7 @@ function calc(){
     (r.litersPerWash > 0 ? ' · ' + r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je ' + c.einheit : '') +
     (c.hatWasser ? ' · ' + Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') + ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') : '') +
     ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.' +
-    (r.gebuehr > 0 ? ' · Rechtsgeschäftsgebühr ' + (c.gebuehrSatz).toLocaleString('de-AT') + ' % auf ' +
-      (c.flat ? c.gebuehrJahre + ' Jahresentgelte (unbestimmte Dauer)' : 'das Entgelt der vereinbarten Dauer') +
+    (r.gebuehr > 0 ? ' · Rechtsgeschäftsgebühr (§ 33 TP 5 GebG) ' + gebHerleitung(c, r) +
       ' = ' + eur2.format(r.gebuehr) + (r.gebInRate ? ', in der Rate enthalten' : ', gesondert ausgewiesen und mit der ersten Rate eingezogen') : '');
 
   /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
@@ -1123,6 +1147,7 @@ function renderAdmin(){
   $('aGebSatz').value = typeof CONFIG.gebuehrSatz === 'number' ? CONFIG.gebuehrSatz : 0;
   $('aGebTraeger').value = CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter';
   $('aGebJahre').value = CONFIG.gebuehrJahre || 3;
+  $('aUst').value = typeof CONFIG.ust === 'number' ? CONFIG.ust : 20;
   const stb = document.querySelector('#schutzTable tbody');
   stb.innerHTML = '';
   CONFIG.schutzStaffel.forEach((s, i) => {
@@ -1153,7 +1178,7 @@ function renderAdmin(){
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
                aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'],
-               aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
+               aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aUst:['ust'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
     const handler = () => {
       const raw = $(id).value;
@@ -1325,6 +1350,7 @@ function vertragHtml(c, r, k){
   'p{orphans:3;widows:3}'+
   'h2+p{page-break-inside:avoid;break-inside:avoid}'+
   '.sepa{page-break-inside:avoid;break-inside:avoid;margin-top:26px}'+
+  '.vermerk{border:1px solid #191919;padding:10px 14px;margin-top:22px;page-break-inside:avoid;break-inside:avoid;font-size:.95em}'+
   '@media screen and (max-width:620px){.kopf{display:block}.kopf .adr{text-align:left;margin-top:10px}.sig{display:block}.sig div+div{margin-top:30px}}'+
   '@media print{html,body{width:auto}'+
   'body{margin:0;max-width:none;padding:16mm 15mm;font-size:10.5pt;line-height:1.45}'+
@@ -1352,9 +1378,10 @@ function vertragHtml(c, r, k){
   '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
-  (r.gebuehr > 0 ? rows('Rechtsgesch\u00e4ftsgeb\u00fchr', r.gebInRate
-     ? eur2.format(r.gebuehr)+' \u2013 im Mietentgelt enthalten, wird von der Vermieterin abgef\u00fchrt'
-     : eur2.format(r.gebuehr)+' \u2013 einmalig, gesondert ausgewiesen; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
+  (r.gebuehr > 0 ? rows('Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge (\u00a7 33 TP 5 GebG)', '<b>'+eur2.format(r.gebuehr)+'</b>'+(r.gebInRate
+     ? ' \u2013 im Mietentgelt enthalten'
+     : ' \u2013 einmalig, gesondert ausgewiesen; der Einzug erfolgt gemeinsam mit der ersten Monatsrate')+
+     '<br><span style="font-size:.9em;color:#555">Bemessung: '+gebHerleitung(c, r)+'</span>') : '')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
   '<h2>4. K\u00fcndigung</h2>'+
   '<p>'+(c.flat
@@ -1363,6 +1390,9 @@ function vertragHtml(c, r, k){
     ? 'Der Vertrag ist auf f\u00fcnf Saisonen abgeschlossen. Er kann von beiden Seiten zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
     : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
   ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
+  (r.gebuehr > 0 ? '<p style="page-break-inside:avoid;break-inside:avoid">Die Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge nach \u00a7 33 TP 5 Geb\u00fchrengesetz wird von der Vermieterin selbst berechnet und an das Finanzamt entrichtet. '+
+    (r.gebInRate ? 'Sie ist im monatlichen Mietentgelt bereits ber\u00fccksichtigt.' : 'Der Mieter ersetzt der Vermieterin die Geb\u00fchr in der unter Punkt 3 ausgewiesenen H\u00f6he; der Betrag wird gemeinsam mit der ersten Monatsrate eingezogen.')+
+    ' Jede Ausfertigung dieser Vertragsurkunde tr\u00e4gt den Vermerk \u00fcber die Selbstberechnung.</p>' : '')+
   '<h2>5. Vertragsende</h2>'+
   '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer bzw. nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Der Mieter ist nicht verpflichtet, das Ger\u00e4t zu erwerben, und hat aus diesem Vertrag keinen Anspruch auf Erwerb. Ein Kauf ist m\u00f6glich; ein allf\u00e4lliger Kaufpreis wird in diesem Fall gesondert und unabh\u00e4ngig von diesem Mietvertrag vereinbart.</p>'+
   '<h2>6. Eigentum und Sorgfalt</h2>'+
@@ -1370,6 +1400,12 @@ function vertragHtml(c, r, k){
   '<h2>7. Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
   '<div class="sig"><div><div class="line">Ort, Datum &middot; St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; '+(k.firma||'Mieter')+'</div></div></div>'+
+  /* Selbstberechnungsvermerk \u2013 Pflicht auf jeder Ausfertigung (Original, Gleichschriften): Betrag, Datum, Unterschrift Bestandgeber */
+  (r.gebuehr > 0 ? '<div class="vermerk"><b>Vermerk \u00fcber die Selbstberechnung der Geb\u00fchr gem\u00e4\u00df \u00a7 33 TP 5 GebG</b>'+
+    '<table>'+rows('Geb\u00fchrenbetrag', eur2.format(r.gebuehr))+
+    rows('Bemessungsgrundlage', eur2.format(r.gebBemessung))+
+    rows('Datum der Selbstberechnung', blank)+'</table>'+
+    '<div class="sig" style="margin-top:14px"><div><div class="line">Unterschrift St\u00f6lner Ges.m.b.H. (Bestandgeberin)</div></div><div></div></div></div>' : '')+
   '<div class="sepa"><h2>8. SEPA-Lastschriftmandat</h2>'+
   '<p>Der Mieter erm\u00e4chtigt die St\u00f6lner Ges.m.b.H., wiederkehrende Zahlungen von seinem Konto mittels SEPA-Lastschrift einzuziehen. Zugleich weist er sein Kreditinstitut an, die von der St\u00f6lner Ges.m.b.H. auf sein Konto gezogenen Lastschriften einzul\u00f6sen. Hinweis: Innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, kann die Erstattung des belasteten Betrages verlangt werden; es gelten die mit dem Kreditinstitut vereinbarten Bedingungen.</p>'+
   '<table>'+rows('Kontoinhaber', k.konto || k.firma || blank)+
