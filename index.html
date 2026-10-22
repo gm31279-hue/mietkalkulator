@@ -401,8 +401,18 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div style="display:flex;gap:10px;flex-wrap:wrap">
     <button type="button" class="btn" id="btnExport" style="padding:10px 20px;font-size:14px">config.json exportieren</button>
     <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">config.json importieren<input type="file" id="fileImport" accept=".json,application/json" style="display:none"></label>
+    <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">Gerätematrix importieren (Excel)<input type="file" id="matrixImport" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></label>
     <button type="button" class="btn ghost" id="btnDiscard" style="padding:10px 20px;font-size:14px">Lokale Änderungen verwerfen</button>
   </div>
+  <div id="matrixPreview" hidden style="margin-top:14px;border:1px solid var(--line);border-left:4px solid var(--magenta);border-radius:10px;padding:14px 18px;background:#fff">
+    <div style="font-weight:600;margin-bottom:6px">Gerätematrix – Vorschau der Änderungen</div>
+    <div id="matrixSummary" style="font-size:13.5px;line-height:1.55"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button type="button" class="btn" id="matrixApply" style="padding:9px 18px;font-size:14px">Übernehmen</button>
+      <button type="button" class="btn ghost" id="matrixCancel" style="padding:9px 18px;font-size:14px">Abbrechen</button>
+    </div>
+  </div>
+  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Übernommen werden Geräte (ohne Status „inaktiv“), Rubriken, Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Danach config.json exportieren, damit es für alle gilt.</p>
   <p class="hint" style="margin-top:10px">So gehen Änderungen live: config.json exportieren und im GitHub-Repository neben der index.html ablegen (bestehende Datei ersetzen, committen). Die Seite lädt die config.json beim Öffnen automatisch – ohne sie gelten die eingebauten Standardwerte.</p>
 </section>
 
@@ -518,7 +528,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 const APP_STAND = '22.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1258,6 +1268,225 @@ $('fileImport').onchange = e => {
   };
   rd.readAsText(f);
   e.target.value = '';
+};
+
+/* ===== Gerätematrix (Excel) importieren =====
+   Liest Geraetematrix_Mietkalkulator.xlsx im Browser (SheetJS, nur bei Bedarf geladen).
+   Spalten werden über die Überschrift gefunden – Reihenfolge in Excel ist egal. */
+const SHEETJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+let matrixPending = null;
+function loadSheetJs(){
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((ok, fail) => {
+    const s = document.createElement('script'); s.src = SHEETJS_URL;
+    s.onload = ok; s.onerror = () => fail(new Error('Excel-Leser konnte nicht geladen werden (Internetverbindung?)'));
+    document.head.appendChild(s);
+  });
+}
+const mxNorm = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toLowerCase();
+const mxBase = n => String(n || '').split('·')[0].trim().toLowerCase();
+const mxNum = v => (v === null || v === undefined || v === '' ) ? null : (typeof v === 'number' ? v : (isNaN(+String(v).replace(/\./g,'').replace(',','.')) ? null : +String(v).replace(/\./g,'').replace(',','.')));
+const mxJa = v => mxNorm(v) === 'ja';
+const mxSlug = (s, taken) => {
+  let b = String(s).toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'').slice(0,14) || 'id';
+  let id = b, i = 2; while (taken.has(id)) id = b + (i++);
+  taken.add(id); return id;
+};
+function mxRows(wb, name){
+  const key = wb.SheetNames.find(n => mxNorm(n) === mxNorm(name));
+  if (!key) throw new Error('Blatt „' + name + '“ fehlt in der Datei.');
+  return XLSX.utils.sheet_to_json(wb.Sheets[key], {header:1, raw:true, defval:null});
+}
+/* Tabelle ab der Kopfzeile, deren erste Zelle firstHeader ist; endet an der ersten Leerzeile (oder läuft bis Blattende) */
+function mxTable(rows, firstHeader, secondHeader, stopAtBlank){
+  const h = rows.findIndex(r => r && mxNorm(r[0]) === mxNorm(firstHeader) && (!secondHeader || mxNorm(r[1]) === mxNorm(secondHeader)));
+  if (h < 0) return null;
+  const cols = rows[h].map(mxNorm);
+  const col = (...names) => { for (const n of names){ const i = cols.findIndex(c => c.indexOf(mxNorm(n)) === 0); if (i >= 0) return i; } return -1; };
+  const data = [];
+  for (let i = h + 1; i < rows.length; i++){
+    const r = rows[i] || [];
+    const leer = r.every(v => v === null || v === '');
+    if (leer){ if (stopAtBlank) break; else continue; }
+    data.push({r, zeile: i + 1});
+  }
+  return {col, data};
+}
+
+function parseMatrix(wb){
+  const warn = [], err = [];
+  const heute = new Date(); heute.setHours(0,0,0,0);
+
+  /* Rubriken */
+  const tR = mxTable(mxRows(wb, 'Rubriken'), 'Rubrik', null, false);
+  if (!tR) throw new Error('Kopfzeile im Blatt „Rubriken“ nicht gefunden.');
+  const cR = {name:tR.col('Rubrik'), ein:tR.col('Einheit (Einzahl)'), mehr:tR.col('Einheit (Mehrzahl)'), wasser:tR.col('Wasseraufbereitung'), schaetz:tR.col('Bedarfsschätzung'), max:tR.col('Regler max')};
+  const katIds = new Set();
+  const kategorien = tR.data.filter(x => x.r[cR.name]).map(x => {
+    const name = String(x.r[cR.name]).trim();
+    /* bestehende Rubrik wiederfinden – auch wenn im Tool ein Zusatz dabeisteht, z. B. „Eismaschinen (Speiseeis)“ */
+    const b = mxBase(name);
+    const alt = CONFIG.kategorien.find(k => mxBase(k.name) === b) ||
+                CONFIG.kategorien.find(k => { const a = mxBase(k.name); return a.indexOf(b + ' ') === 0 || b.indexOf(a + ' ') === 0; });
+    const id = alt ? alt.id : mxSlug(name, new Set([...katIds, ...CONFIG.kategorien.map(k => k.id)]));
+    katIds.add(id);
+    const k = {id, name, einheit: String(x.r[cR.ein] || 'Einheit').trim(), plural: String(x.r[cR.mehr] || x.r[cR.ein] || 'Einheiten').trim(),
+      wasser: mxJa(x.r[cR.wasser]), schaetz: mxJa(x.r[cR.schaetz]), posten: []};
+    const max = mxNum(x.r[cR.max]); if (max > 0) k.wgMax = max;
+    if (alt && alt.platzhalterMenge) k.platzhalterMenge = true;
+    return k;
+  });
+  if (!kategorien.length) throw new Error('Keine Rubriken gefunden.');
+  const katByName = n => kategorien.find(k => mxBase(k.name) === mxBase(n));
+
+  /* Zubehör & Verbrauch */
+  const rZ = mxRows(wb, 'Zubehör & Verbrauch');
+  /* Wasseraufbereitung endet am Abschnitt B (Verbrauchsmaterial) – Leerzeilen dazwischen sind erlaubt */
+  let vIdx = rZ.findIndex(r => r && (/^b\s*·/.test(mxNorm(r[0])) || (mxNorm(r[0]) === 'rubrik' && mxNorm(r[1]) === 'position')));
+  if (vIdx < 0) vIdx = rZ.length;
+  const tW = mxTable(rZ.slice(0, vIdx), 'Option', null, false);
+  const water = [], taken = new Set(CONFIG.water.map(w => w.id));
+  let iqMeter = null;
+  if (tW){
+    const c = {name:tW.col('Option'), akt:tW.col('Aktionspreis'), lis:tW.col('Listenpreis'), wech:tW.col('Wechsel'), kap:tW.col('Kapazität'), iq:tW.col('iQ Meter'), bis:tW.col('Aktion gültig'), tipp:tW.col('Hinweistext')};
+    tW.data.forEach(({r, zeile}) => {
+      const name = String(r[c.name] || '').trim(); if (!name) return;
+      const liste = mxNum(r[c.lis]); let aktion = mxNum(r[c.akt]);
+      const bis = r[c.bis] instanceof Date ? r[c.bis] : null;
+      if (aktion != null && bis && bis < heute){ warn.push(name + ': Aktion abgelaufen (' + bis.toLocaleDateString('de-AT') + ') – es gilt der Listenpreis.'); aktion = liste; }
+      if (mxNorm(name) === 'iq meter'){ iqMeter = {aktion: aktion != null ? aktion : liste || 0, liste: liste || 0}; return; }
+      if (!(liste > 0)) { err.push('Zubehör Zeile ' + zeile + ' (' + name + '): Listenpreis fehlt.'); return; }
+      const alt = CONFIG.water.find(w => mxNorm(w.name) === mxNorm(name));
+      water.push({id: alt ? alt.id : mxSlug(name, taken), name, aktion: aktion != null ? aktion : liste, liste,
+        wechsel: mxNum(r[c.wech]) || 0, kap: mxNum(r[c.kap]) || 0, iq: mxJa(r[c.iq]), tipp: String(r[c.tipp] || '').trim()});
+    });
+  }
+  const tV = mxTable(rZ, 'Rubrik', 'Position', false);
+  if (tV){
+    const c = {kat:tV.col('Rubrik'), name:tV.col('Position'), preis:tV.col('Preis je Gebinde'), je:tV.col('Einheiten je Gebinde')};
+    tV.data.forEach(({r, zeile}) => {
+      if (!r[c.name]) return;
+      const k = katByName(r[c.kat]);
+      if (!k){ err.push('Verbrauch Zeile ' + zeile + ': Rubrik „' + (r[c.kat] || '') + '“ gibt es im Blatt Rubriken nicht.'); return; }
+      const preis = mxNum(r[c.preis]) || 0, je = mxNum(r[c.je]) || 0;
+      if (!(preis > 0 && je > 0)) warn.push('Verbrauch „' + r[c.name] + '“: Preis oder Gebinde fehlt – Position wird mit 0 gerechnet.');
+      k.posten.push({name: String(r[c.name]).trim(), preis, je: je > 0 ? je : 1});
+    });
+  }
+
+  /* Geräte */
+  const tG = mxTable(mxRows(wb, 'Geräte'), 'Rubrik', 'Modell', false);
+  if (!tG) throw new Error('Kopfzeile im Blatt „Geräte“ nicht gefunden.');
+  const c = {kat:tG.col('Rubrik'), name:tG.col('Modell'), lp:tG.col('Listenpreis'), akt:tG.col('Aktionspreis'), bis:tG.col('Aktion gültig'),
+    wasser:tG.col('Wasser'), wart:tG.col('Wartung'), wg:tG.col('Startwert'), status:tG.col('Status')};
+  const models = [], mTaken = new Set(CONFIG.models.map(m => m.id)), namen = new Set();
+  let inaktiv = 0;
+  tG.data.forEach(({r, zeile}) => {
+    const name = String(r[c.name] || '').trim(); if (!name) return;
+    const status = mxNorm(r[c.status]);
+    if (status === 'inaktiv'){ inaktiv++; return; }
+    const k = katByName(r[c.kat]);
+    if (!k){ err.push('Geräte Zeile ' + zeile + ' (' + name + '): Rubrik fehlt oder ist unbekannt.'); return; }
+    const lp = mxNum(r[c.lp]);
+    if (!(lp > 0)){ err.push('Geräte Zeile ' + zeile + ' (' + name + '): Listenpreis fehlt.'); return; }
+    if (namen.has(mxNorm(name))){ err.push('Geräte Zeile ' + zeile + ': „' + name + '“ steht doppelt in der Matrix.'); return; }
+    namen.add(mxNorm(name));
+    if (status === 'prüfen') warn.push(name + ': Status „prüfen“ – Daten noch unvollständig.');
+    const alt = CONFIG.models.find(m => mxNorm(m.name) === mxNorm(name)) || CONFIG.models.find(m => mxBase(m.name) === mxBase(name) && m.kat === k.id);
+    const m = {id: alt ? alt.id : mxSlug(name, mTaken), kat: k.id, name, geraet: lp,
+      wasser: mxNum(r[c.wasser]) || 0, wartung: mxNum(r[c.wart]) || 0, wg: mxNum(r[c.wg]) || (alt ? alt.wg : 10)};
+    let akt = mxNum(r[c.akt]);
+    const bis = r[c.bis] instanceof Date ? r[c.bis] : null;
+    if (akt != null && bis && bis < heute){ warn.push(name + ': Aktion abgelaufen (' + bis.toLocaleDateString('de-AT') + ') – nur Listenpreis übernommen.'); akt = null; }
+    if (akt != null && akt > 0 && akt < lp) m.aktion = akt;
+    else if (akt != null && akt >= lp) warn.push(name + ': Aktionspreis nicht unter dem Listenpreis – ignoriert.');
+    if (k.wasser && !(m.wasser > 0)) warn.push(name + ': Rubrik mit Wasseraufbereitung, aber Wasser l/Einheit ist 0.');
+    models.push(m);
+  });
+  kategorien.forEach(k => { if (!models.some(m => m.kat === k.id)) warn.push('Rubrik „' + k.name + '“ hat kein aktives Gerät.'); });
+  if (!models.length) err.push('Keine aktiven Geräte gefunden.');
+
+  /* Konditionen */
+  const out = {kategorien, models, water: water.length ? water : null, iqMeter};
+  const rK = mxRows(wb, 'Konditionen');
+  const tS = mxTable(rK, 'bis Listenpreis €', null, true);
+  if (tS){
+    const st = tS.data.map(({r}) => ({bis: mxNum(r[0]), preis: mxNum(r[1])})).filter(s => s.bis > 0 && s.preis >= 0).sort((a,b) => a.bis - b.bis);
+    if (st.length) out.schutzStaffel = st;
+  }
+  const par = label => { const r = rK.find(x => x && mxNorm(x[0]).indexOf(mxNorm(label)) === 0); return r ? r[1] : null; };
+  const pct = v => { const n = mxNum(v); return n == null ? null : (n < 1 ? Math.round(n * 1000) / 10 : n); };
+  [['zuschlag','Zuschlag Miete',pct],['zuschlagFlat','Zuschlag Flatrate',pct],['zuschlagSaison','Zuschlag Saisonmiete',pct],
+   ['saisonMonate','Saisonmiete: Zahlmonate',mxNum],['gebuehrSatz','Rechtsgeschäftsgebühr',pct],['strom','Strompreis',mxNum]]
+    .forEach(([k, label, fn]) => { const v = fn(par(label)); if (v != null) out[k] = v; });
+  const tr = mxNorm(par('Gebühr trägt'));
+  if (tr) out.gebuehrTraeger = tr.indexOf('st') === 0 ? 'miete' : 'mieter';
+  return {cfg: out, warn, err, inaktiv};
+}
+
+function matrixDiff(p){
+  const z = [], euro = v => eur2.format(v);
+  const alt = new Map(CONFIG.models.map(m => [m.id, m])), neu = new Map(p.cfg.models.map(m => [m.id, m]));
+  const neuG = p.cfg.models.filter(m => !alt.has(m.id)), wegG = CONFIG.models.filter(m => !neu.has(m.id));
+  const geaendert = [];
+  p.cfg.models.forEach(m => {
+    const a = alt.get(m.id); if (!a) return;
+    const d = [];
+    if (a.geraet !== m.geraet) d.push('Liste ' + euro(a.geraet) + ' → ' + euro(m.geraet));
+    if ((a.aktion || 0) !== (m.aktion || 0)) d.push('Aktion ' + (a.aktion ? euro(a.aktion) : '–') + ' → ' + (m.aktion ? euro(m.aktion) : '–'));
+    if ((a.wartung || 0) !== m.wartung) d.push('Wartung ' + euro(a.wartung || 0) + ' → ' + euro(m.wartung));
+    if ((a.wasser || 0) !== m.wasser) d.push('Wasser ' + (a.wasser || 0) + ' → ' + m.wasser + ' l');
+    if ((a.wg || 0) !== m.wg) d.push('Startwert ' + (a.wg || 0) + ' → ' + m.wg);
+    if (a.kat !== m.kat) d.push('Rubrik geändert');
+    if (a.name !== m.name) d.push('Name „' + a.name + '“ → „' + m.name + '“');
+    if (d.length) geaendert.push('<b>' + m.name + '</b>: ' + d.join(' · '));
+  });
+  z.push('<b>' + p.cfg.models.length + ' Geräte</b> in ' + p.cfg.kategorien.length + ' Rubriken · ' + neuG.length + ' neu · ' + geaendert.length + ' geändert · ' + wegG.length + ' entfernt' + (p.inaktiv ? ' (' + p.inaktiv + ' als inaktiv markiert)' : ''));
+  if (neuG.length) z.push('Neu: ' + neuG.map(m => m.name).join(', '));
+  if (wegG.length) z.push('Entfernt: ' + wegG.map(m => m.name).join(', '));
+  geaendert.forEach(g => z.push(g));
+  const k = [];
+  [['zuschlag','Zuschlag Miete','%'],['zuschlagFlat','Zuschlag Flatrate','%'],['zuschlagSaison','Zuschlag Saison','%'],['saisonMonate','Saison-Zahlmonate',''],['gebuehrSatz','Gebühr','%'],['strom','Strom €/kWh','']]
+    .forEach(([key, l, u]) => { if (p.cfg[key] != null && p.cfg[key] !== CONFIG[key]) k.push(l + ' ' + CONFIG[key] + u + ' → ' + p.cfg[key] + u); });
+  if (p.cfg.gebuehrTraeger && p.cfg.gebuehrTraeger !== CONFIG.gebuehrTraeger) k.push('Gebühr trägt: ' + (p.cfg.gebuehrTraeger === 'miete' ? 'Stölner' : 'Mieter'));
+  if (p.cfg.schutzStaffel && JSON.stringify(p.cfg.schutzStaffel) !== JSON.stringify(CONFIG.schutzStaffel)) k.push('Rundumschutz-Staffel geändert');
+  if (p.cfg.water && JSON.stringify(p.cfg.water) !== JSON.stringify(CONFIG.water)) k.push('Wasseraufbereitung geändert');
+  if (p.cfg.iqMeter && JSON.stringify(p.cfg.iqMeter) !== JSON.stringify(CONFIG.iqMeter)) k.push('iQ Meter ' + euro(CONFIG.iqMeter.aktion) + ' → ' + euro(p.cfg.iqMeter.aktion));
+  if (k.length) z.push('Konditionen: ' + k.join(' · '));
+  if (!neuG.length && !wegG.length && !geaendert.length && !k.length) z.push('Keine Änderungen gegenüber dem aktuellen Stand.');
+  if (p.warn.length) z.push('<span style="color:#854F0B"><b>Hinweise:</b><br>' + p.warn.join('<br>') + '</span>');
+  return z.map(x => '<div style="margin-top:4px">' + x + '</div>').join('');
+}
+
+$('matrixImport').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    await loadSheetJs();
+    const wb = XLSX.read(await f.arrayBuffer(), {type:'array', cellDates:true});
+    const p = parseMatrix(wb);
+    if (p.err.length){
+      $('matrixPreview').hidden = false; matrixPending = null; $('matrixApply').hidden = true;
+      $('matrixSummary').innerHTML = '<span style="color:#B00020"><b>Import nicht möglich – bitte in der Excel korrigieren:</b><br>' + p.err.join('<br>') + '</span>';
+      return;
+    }
+    matrixPending = p; $('matrixApply').hidden = false;
+    $('matrixSummary').innerHTML = matrixDiff(p);
+    $('matrixPreview').hidden = false;
+    $('matrixPreview').scrollIntoView({behavior:'smooth', block:'nearest'});
+  } catch(err){ alert('Gerätematrix konnte nicht gelesen werden: ' + err.message); }
+};
+$('matrixCancel').onclick = () => { matrixPending = null; $('matrixPreview').hidden = true; };
+$('matrixApply').onclick = () => {
+  if (!matrixPending) return;
+  const p = matrixPending.cfg, neu = clone(CONFIG);
+  neu.kategorien = p.kategorien; neu.models = p.models;
+  ['water','iqMeter','schutzStaffel','zuschlag','zuschlagFlat','zuschlagSaison','saisonMonate','gebuehrSatz','gebuehrTraeger','strom']
+    .forEach(k => { if (p[k] != null) neu[k] = p[k]; });
+  neu.version = FACTORY.version;
+  CONFIG = neu; matrixPending = null; $('matrixPreview').hidden = true;
+  saveLocal(); buildKatSelect($('katSel').value); buildSelect(); loadModelFields(); renderAdmin(); calc();
+  alert('Gerätematrix übernommen. Für alle sichtbar wird sie erst mit „config.json exportieren“ und dem Upload ins Repository.');
 };
 
 $('btnDiscard').onclick = () => {
