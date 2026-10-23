@@ -22,39 +22,15 @@
       ]
     },
     {
-      "id": "combi",
-      "name": "Combidämpfer · Daten bitte einpflegen",
-      "einheit": "Garvorgang",
-      "plural": "Garvorgänge",
-      "wasser": true,
-      "schaetz": false,
-      "posten": [
-        {
-          "name": "Combi-Reiniger (Preis und Gebinde bitte einpflegen)",
-          "preis": 0,
-          "je": 1
-        }
-      ]
-    },
-    {
-      "id": "espresso",
-      "name": "Espressomaschinen · Daten bitte einpflegen",
-      "einheit": "Bezug",
-      "plural": "Bezüge",
-      "wasser": true,
-      "schaetz": false,
-      "posten": []
-    },
-    {
       "id": "eis",
       "name": "Eismaschinen (Speiseeis)",
       "einheit": "kg Eis",
       "plural": "kg Eis",
       "wasser": false,
       "schaetz": false,
+      "posten": [],
       "wgMax": 200,
-      "platzhalterMenge": true,
-      "posten": []
+      "platzhalterMenge": true
     },
     {
       "id": "softeis",
@@ -63,61 +39,88 @@
       "plural": "Portionen",
       "wasser": false,
       "schaetz": false,
+      "posten": [],
       "wgMax": 300,
-      "platzhalterMenge": true,
-      "posten": []
+      "platzhalterMenge": true
     }
   ],
   "models": [
     {
-      "id": "o31",
+      "id": "glaeserspueler",
       "kat": "spueler",
-      "name": "Ocean 31.DE · Gläserspüler",
-      "geraet": 2120,
-      "wasser": 2.8,
+      "name": "Gläserspüler RiverPlus 444.CDE",
+      "geraet": 4159,
+      "wasser": 1.5,
       "wartung": 0,
       "wg": 24
     },
     {
-      "id": "o41",
+      "id": "glaeserspueler2",
       "kat": "spueler",
-      "name": "Ocean 41.DE · Gläserspüler groß (Beispieldaten)",
-      "geraet": 2590,
-      "wasser": 3.1,
+      "name": "Gläserspüler RiverPlus 444.WDE · mit Umkehrosmose",
+      "geraet": 7918,
+      "wasser": 1.5,
       "wartung": 0,
-      "wg": 30
+      "wg": 24
     },
     {
-      "id": "o61",
+      "id": "glaeserspueler3",
       "kat": "spueler",
-      "name": "Ocean 61.CDE · Geschirrspüler",
-      "geraet": 3943,
-      "wasser": 6.8,
+      "name": "Gläserspüler Ocean 441.CDE",
+      "geraet": 3059,
+      "wasser": 1.5,
+      "wartung": 0,
+      "wg": 24
+    },
+    {
+      "id": "geschirrspuele",
+      "kat": "spueler",
+      "name": "Geschirrspüler RiverPlus 464.CDE",
+      "geraet": 5366,
+      "wasser": 1.5,
       "wartung": 0,
       "wg": 18
     },
     {
-      "id": "o80",
+      "id": "geschirrspuele2",
       "kat": "spueler",
-      "name": "Ocean 80 · Haubenspüler (Beispieldaten)",
-      "geraet": 7490,
-      "wasser": 8.4,
+      "name": "Geschirrspüler RiverPlus 464.TDE",
+      "geraet": 5829,
+      "wasser": 1.5,
       "wartung": 0,
-      "wg": 40
+      "wg": 18
+    },
+    {
+      "id": "geschirrspuele3",
+      "kat": "spueler",
+      "name": "Geschirrspüler Ocean 461.CDE",
+      "geraet": 4017,
+      "wasser": 1.5,
+      "wartung": 0,
+      "wg": 18
+    },
+    {
+      "id": "geschirrspuele4",
+      "kat": "spueler",
+      "name": "Geschirrspüler Ocean 461.TDE",
+      "geraet": 4413,
+      "wasser": 1.5,
+      "wartung": 0,
+      "wg": 18
     },
     {
       "id": "sbc1",
       "kat": "softeis",
-      "name": "BC EASY1 PM · 1 Sorte",
+      "name": "BC EASY1 PM · 1 Sorte · luftgekühlt",
       "geraet": 12600,
       "wasser": 0,
       "wartung": 900,
       "wg": 100
     },
     {
-      "id": "sgio",
+      "id": "giotto11grweis",
       "kat": "softeis",
-      "name": "Giotto 11",
+      "name": "Giotto 11 GR · Weiß/Schwarz",
       "geraet": 13200,
       "wasser": 0,
       "wartung": 900,
@@ -126,7 +129,7 @@
     {
       "id": "smc1",
       "kat": "softeis",
-      "name": "MC EASY1 PM",
+      "name": "MC EASY1 PM · luftgekühlt",
       "geraet": 14750,
       "wasser": 0,
       "wartung": 900,
@@ -135,7 +138,7 @@
     {
       "id": "shc1",
       "kat": "softeis",
-      "name": "HC EASY1 PM",
+      "name": "HC EASY1 PM · luftgekühlt",
       "geraet": 16450,
       "wasser": 0,
       "wartung": 900,
@@ -144,7 +147,7 @@
     {
       "id": "sbc2",
       "kat": "softeis",
-      "name": "BC EASY2 PM · 2 Sorten + Mix",
+      "name": "BC EASY2 PM · 2 Sorten + Mix · luftgekühlt",
       "geraet": 19450,
       "wasser": 0,
       "wartung": 1095,
@@ -153,7 +156,7 @@
     {
       "id": "sbv2",
       "kat": "softeis",
-      "name": "BV EASY2 PM · 2 Sorten + Mix",
+      "name": "BV EASY2 PM · 2 Sorten + Mix · luftgekühlt",
       "geraet": 20900,
       "wasser": 0,
       "wartung": 1095,
@@ -162,7 +165,7 @@
     {
       "id": "smv2",
       "kat": "softeis",
-      "name": "MV EASY2 PM",
+      "name": "MV EASY2 PM · luftgekühlt",
       "geraet": 27300,
       "wasser": 0,
       "wartung": 1095,
@@ -171,7 +174,7 @@
     {
       "id": "shv2",
       "kat": "softeis",
-      "name": "HV EASY2 PM",
+      "name": "HV EASY2 PM · luftgekühlt",
       "geraet": 30150,
       "wasser": 0,
       "wartung": 1095,
@@ -180,7 +183,7 @@
     {
       "id": "smv2k",
       "kat": "softeis",
-      "name": "MV EASY2 Kolor",
+      "name": "MV EASY2 Kolor · wassergekühlt",
       "geraet": 31150,
       "wasser": 0,
       "wartung": 1095,
@@ -189,80 +192,71 @@
     {
       "id": "setoi",
       "kat": "softeis",
-      "name": "Etoile Gel Plus PM · 3 Sorten + 2 Mix, bis 70 kg/h",
+      "name": "Etoile Gel Plus PM · 3 Sorten + 2 Mix, bis 70 kg/h · wassergekühlt",
       "geraet": 34200,
       "wasser": 0,
       "wartung": 1240,
       "wg": 200
     },
     {
-      "id": "ssb",
-      "kat": "softeis",
-      "name": "Selbstbedienungs-Softeismaschine",
-      "geraet": 48553,
-      "wasser": 0,
-      "wartung": 0,
-      "wg": 200
-    },
-    {
-      "id": "emul",
+      "id": "kombimaschinem",
       "kat": "eis",
-      "name": "Multy TTi",
+      "name": "Kombimaschine Multy P 7 TTi",
       "geraet": 46900,
-      "aktion": 39865,
       "wasser": 0,
       "wartung": 1340,
-      "wg": 20
+      "wg": 20,
+      "aktion": 39865
     },
     {
-      "id": "epas",
+      "id": "pasteursweety6",
       "kat": "eis",
-      "name": "Pasteur Sweety TTi",
+      "name": "Pasteur Sweety 60 TTi",
       "geraet": 26275,
-      "aktion": 22333.75,
       "wasser": 0,
       "wartung": 590,
-      "wg": 20
+      "wg": 20,
+      "aktion": 22333.75
     },
     {
       "id": "esm4",
       "kat": "eis",
       "name": "Kombimaschine Smarty 4 TTi · Standmodell",
       "geraet": 29600,
-      "aktion": 25160,
       "wasser": 0,
       "wartung": 1340,
-      "wg": 20
+      "wg": 20,
+      "aktion": 25160
     },
     {
       "id": "esm7",
       "kat": "eis",
       "name": "Kombimaschine Smarty 7 TTi · Standmodell",
       "geraet": 43200,
-      "aktion": 36720,
       "wasser": 0,
       "wartung": 1340,
-      "wg": 30
+      "wg": 30,
+      "aktion": 36720
     },
     {
       "id": "esm12",
       "kat": "eis",
       "name": "Kombimaschine Smarty 12 TTi · Standmodell",
       "geraet": 53700,
-      "aktion": 45645,
       "wasser": 0,
       "wartung": 1340,
-      "wg": 40
+      "wg": 40,
+      "aktion": 45645
     },
     {
       "id": "esm16",
       "kat": "eis",
       "name": "Kombimaschine Smarty 16 TTi · Standmodell",
       "geraet": 63600,
-      "aktion": 54060,
       "wasser": 0,
       "wartung": 1340,
-      "wg": 50
+      "wg": 50,
+      "aktion": 54060
     }
   ],
   "schutzStaffel": [
@@ -318,6 +312,21 @@
   "aktionsHinweis": "Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.",
   "saisonMonate": 8,
   "zuschlagSaison": 10,
+  "gebuehrSatz": 1,
+  "gebuehrTraeger": "mieter",
+  "gebuehrJahre": 3,
+  "ust": 20,
+  "gebuehrFreigrenze": 150,
+  "zins": 0,
+  "restwert": {
+    "12": 0,
+    "24": 0,
+    "36": 0,
+    "48": 0,
+    "60": 0
+  },
+  "montageModus": "rate",
+  "mindestrate": 0,
   "zuschlag": 15,
   "zuschlagFlat": 30,
   "kwh": 0,
