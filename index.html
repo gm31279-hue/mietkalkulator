@@ -425,7 +425,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <button type="button" class="btn ghost" id="matrixCancel" style="padding:9px 18px;font-size:14px">Abbrechen</button>
     </div>
   </div>
-  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Übernommen werden Geräte (ohne Status „inaktiv“), Rubriken, Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Nach dem Übernehmen „Für alle veröffentlichen“ – dann gilt es in 1–2 Minuten für den ganzen Außendienst.</p>
+  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Live gehen nur fertige Geräte: Status „aktiv“ (oder „neu“) und alle Pflichtfelder befüllt – „prüfen“ und unvollständige Zeilen werden zurückgehalten. Dazu Rubriken (nur mit fertigem Gerät), Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Nach dem Übernehmen „Für alle veröffentlichen“ – dann gilt es in 1–2 Minuten für den ganzen Außendienst.</p>
   <p class="hint" style="margin-top:10px">„Für alle veröffentlichen“ schreibt den aktuellen Stand (inkl. aller Admin-Änderungen auf diesem Gerät) als config.json direkt ins GitHub-Repository; nach 1–2 Minuten lädt jeder Kalkulator beim nächsten Öffnen die neuen Werte. Ohne GitHub-Zugang: config.json exportieren und von Hand hochladen.</p>
 </section>
 
@@ -537,7 +537,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.8.0';
 const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1345,7 +1345,7 @@ function parseMatrix(wb){
   /* Rubriken */
   const tR = mxTable(mxRows(wb, 'Rubriken'), 'Rubrik', null, false);
   if (!tR) throw new Error('Kopfzeile im Blatt „Rubriken“ nicht gefunden.');
-  const cR = {name:tR.col('Rubrik'), ein:tR.col('Einheit (Einzahl)'), mehr:tR.col('Einheit (Mehrzahl)'), wasser:tR.col('Wasseraufbereitung'), schaetz:tR.col('Bedarfsschätzung'), max:tR.col('Regler max')};
+  const cR = {name:tR.col('Rubrik'), ein:tR.col('Einheit (Einzahl)'), mehr:tR.col('Einheit (Mehrzahl)'), wasser:tR.col('Wasseraufbereitung'), schaetz:tR.col('Bedarfsschätzung'), max:tR.col('Regler max'), verbrauch:tR.col('Verbrauchsmaterial')};
   const katIds = new Set();
   const kategorien = tR.data.filter(x => x.r[cR.name]).map(x => {
     const name = String(x.r[cR.name]).trim();
@@ -1359,6 +1359,7 @@ function parseMatrix(wb){
       wasser: mxJa(x.r[cR.wasser]), schaetz: mxJa(x.r[cR.schaetz]), posten: []};
     const max = mxNum(x.r[cR.max]); if (max > 0) k.wgMax = max;
     if (alt && alt.platzhalterMenge) k.platzhalterMenge = true;
+    k._verbrauch = cR.verbrauch >= 0 && mxJa(x.r[cR.verbrauch]);
     return k;
   });
   if (!kategorien.length) throw new Error('Keine Rubriken gefunden.');
@@ -1406,6 +1407,9 @@ function parseMatrix(wb){
     wasser:tG.col('Wasser'), wart:tG.col('Wartung'), wg:tG.col('Startwert'), status:tG.col('Status')};
   const models = [], mTaken = new Set(CONFIG.models.map(m => m.id)), namen = new Set();
   let inaktiv = 0;
+  /* Nur fertige Geräte gehen live: Status „prüfen“ und leere Pflichtfelder werden zurückgehalten */
+  const zurueck = {}, leer = v => v === null || v === undefined || String(v).trim() === '';
+  const halte = (kat, grund) => { const z = zurueck[kat] = zurueck[kat] || {}; z[grund] = (z[grund] || 0) + 1; };
   tG.data.forEach(({r, zeile}) => {
     const name = String(r[c.name] || '').trim(); if (!name) return;
     const status = mxNorm(r[c.status]);
@@ -1416,7 +1420,12 @@ function parseMatrix(wb){
     if (!(lp > 0)){ err.push('Geräte Zeile ' + zeile + ' (' + name + '): Listenpreis fehlt.'); return; }
     if (namen.has(mxNorm(name))){ err.push('Geräte Zeile ' + zeile + ': „' + name + '“ steht doppelt in der Matrix.'); return; }
     namen.add(mxNorm(name));
-    if (status === 'prüfen') warn.push(name + ': Status „prüfen“ – Daten noch unvollständig.');
+    if (status === 'prüfen' || status === 'pruefen'){ halte(k.name, 'Status „prüfen“'); return; }
+    const fehlt = [];
+    if (k.wasser && leer(r[c.wasser])) fehlt.push('Wasser');
+    if (leer(r[c.wart])) fehlt.push('Wartung');
+    if (leer(r[c.wg])) fehlt.push('Startwert');
+    if (fehlt.length){ halte(k.name, 'leer: ' + fehlt.join(' + ')); return; }
     const alt = CONFIG.models.find(m => mxNorm(m.name) === mxNorm(name)) || CONFIG.models.find(m => mxBase(m.name) === mxBase(name) && m.kat === k.id);
     const m = {id: alt ? alt.id : mxSlug(name, mTaken), kat: k.id, name, geraet: lp,
       wasser: mxNum(r[c.wasser]) || 0, wartung: mxNum(r[c.wart]) || 0, wg: mxNum(r[c.wg]) || (alt ? alt.wg : 10)};
@@ -1428,11 +1437,20 @@ function parseMatrix(wb){
     if (k.wasser && !(m.wasser > 0)) warn.push(name + ': Rubrik mit Wasseraufbereitung, aber Wasser l/Einheit ist 0.');
     models.push(m);
   });
-  kategorien.forEach(k => { if (!models.some(m => m.kat === k.id)) warn.push('Rubrik „' + k.name + '“ hat kein aktives Gerät.'); });
-  if (!models.length) err.push('Keine aktiven Geräte gefunden.');
+  /* Verbrauchsmaterial „über Stölner = ja“, aber keine Position → Miete wäre zu niedrig, der Vertrag sagt das Material zu */
+  kategorien.forEach(k => {
+    if (k._verbrauch && !k.posten.length && models.some(m => m.kat === k.id))
+      err.push('Rubrik „' + k.name + '“: Verbrauchsmaterial über Stölner = ja, aber im Blatt „Zubehör & Verbrauch“ (Abschnitt B) steht keine Position. Bitte Positionen eintragen oder in „Rubriken“ auf „nein“ setzen.');
+    delete k._verbrauch;
+  });
+  Object.keys(zurueck).forEach(kn => warn.push('<b>' + kn + '</b> – nicht veröffentlicht: ' + Object.entries(zurueck[kn]).map(([g, n]) => n + ' × ' + g).join(', ')));
+  const leerKat = kategorien.filter(k => !models.some(m => m.kat === k.id));
+  if (leerKat.length) warn.push('Ohne fertiges Gerät, im Kalkulator ausgeblendet: ' + leerKat.map(k => k.name).join(', '));
+  const katLive = kategorien.filter(k => models.some(m => m.kat === k.id));
+  if (!models.length) err.push('Kein Gerät ist fertig (Status „aktiv“ und alle Pflichtfelder befüllt).');
 
   /* Konditionen */
-  const out = {kategorien, models, water: water.length ? water : null, iqMeter};
+  const out = {kategorien: katLive, models, water: water.length ? water : null, iqMeter};
   const rK = mxRows(wb, 'Konditionen');
   const tS = mxTable(rK, 'bis Listenpreis €', null, true);
   if (tS){
@@ -1446,7 +1464,8 @@ function parseMatrix(wb){
     .forEach(([k, label, fn]) => { const v = fn(par(label)); if (v != null) out[k] = v; });
   const tr = mxNorm(par('Gebühr trägt'));
   if (tr) out.gebuehrTraeger = tr.indexOf('st') === 0 ? 'miete' : 'mieter';
-  return {cfg: out, warn, err, inaktiv};
+  const nZurueck = Object.values(zurueck).reduce((s, z) => s + Object.values(z).reduce((a, b) => a + b, 0), 0);
+  return {cfg: out, warn, err, inaktiv, nZurueck};
 }
 
 function matrixDiff(p){
@@ -1466,7 +1485,7 @@ function matrixDiff(p){
     if (a.name !== m.name) d.push('Name „' + a.name + '“ → „' + m.name + '“');
     if (d.length) geaendert.push('<b>' + m.name + '</b>: ' + d.join(' · '));
   });
-  z.push('<b>' + p.cfg.models.length + ' Geräte</b> in ' + p.cfg.kategorien.length + ' Rubriken · ' + neuG.length + ' neu · ' + geaendert.length + ' geändert · ' + wegG.length + ' entfernt' + (p.inaktiv ? ' (' + p.inaktiv + ' als inaktiv markiert)' : ''));
+  z.push('<b>' + p.cfg.models.length + ' Geräte</b> in ' + p.cfg.kategorien.length + ' Rubriken · ' + neuG.length + ' neu · ' + geaendert.length + ' geändert · ' + wegG.length + ' entfernt' + (p.inaktiv ? ' (' + p.inaktiv + ' als inaktiv markiert)' : '') + (p.nZurueck ? ' · <b>' + p.nZurueck + ' zurückgehalten</b> (noch nicht fertig)' : ''));
   if (neuG.length) z.push('Neu: ' + neuG.map(m => m.name).join(', '));
   if (wegG.length) z.push('Entfernt: ' + wegG.map(m => m.name).join(', '));
   geaendert.forEach(g => z.push(g));
