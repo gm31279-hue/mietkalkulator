@@ -409,7 +409,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <button type="button" class="btn ghost" id="ghTokenSave" style="padding:9px 16px;font-size:13.5px">Speichern</button>
       <button type="button" class="btn ghost" id="ghTokenDel" style="padding:9px 16px;font-size:13.5px">Entfernen</button>
     </div>
-    <p class="hint" style="margin-top:8px">Einmalig je Gerät: Fine-grained Token auf github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens. Nur das Repository <b>spueler-konfigurator</b>, Berechtigung <b>Contents: Read and write</b>, Ablauf z. B. 1 Jahr. Der Token wird nur in diesem Browser gespeichert, nicht im Kalkulator.</p>
+    <p class="hint" style="margin-top:8px">Einmalig je Gerät: Fine-grained Token auf github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens. Nur das Repository <b>mietkalkulator</b>, Berechtigung <b>Contents: Read and write</b>, Ablauf z. B. 1 Jahr. Der Token wird nur in diesem Browser gespeichert, nicht im Kalkulator.</p>
   </details>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
     <button type="button" class="btn ghost" id="btnExport" style="padding:10px 20px;font-size:14px">config.json exportieren</button>
@@ -537,7 +537,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1222,7 +1222,7 @@ $('btnAddWater').onclick = () => {
 
 /* ===== Für alle veröffentlichen: config.json per GitHub-API ins Repository schreiben =====
    Token liegt nur im localStorage dieses Browsers (nie im Code, nie in der config.json). */
-const GH_REPO = 'gm31279-hue/spueler-konfigurator', GH_BRANCH = 'main', GH_KEY = 'stoelnerGhToken';
+const GH_REPO = 'gm31279-hue/mietkalkulator', GH_BRANCH = 'main', GH_KEY = 'stoelnerGhToken';
 const ghGet = () => { try { return localStorage.getItem(GH_KEY) || ''; } catch(e){ return ''; } };
 function ghStateUi(){ $('ghTokenState').textContent = ghGet() ? '· hinterlegt ✓' : '· noch nicht hinterlegt'; }
 $('ghTokenSave').onclick = () => {
