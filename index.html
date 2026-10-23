@@ -134,11 +134,11 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 #stickyRate.show{display:flex}
 .chip{text-align:center;line-height:1.35}
 .chip.on{border-color:var(--magenta);color:var(--magenta)}
-.vartab{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
-.vartab th,.vartab td{padding:9px 10px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vartab{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.vartab th,.vartab td{padding:8px 6px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vartab th:first-child,.vartab td:first-child{text-align:left;color:var(--grey);font-weight:400}
 .vartab thead th{border-top:none}
-.vartab thead button{font:inherit;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--ink)}
+.vartab thead button{font:inherit;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 11px;cursor:pointer;color:var(--ink)}
 .vartab thead button:hover{border-color:var(--magenta);color:var(--magenta)}
 .vartab .cur{background:var(--magenta-tint)}
 .vartab thead .cur button{background:var(--magenta);border-color:var(--magenta);color:#fff}
@@ -446,23 +446,19 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <p class="note" id="endNote">Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.</p>
       </div>
     </div>
+    <p class="chartnote" id="chartNote" style="margin:14px 4px 0;font-size:14px"></p>
 
-    <div class="panel" style="margin-top:22px">
-      <h2 id="einheitH2">Was kostet ein Spülgang?</h2>
-      <div class="spuelhead">
-        <p class="big m" id="totalCt">–</p>
-        <p style="font-size:14px;color:var(--grey)"><span id="einheitCtLabel">je Spülgang</span> beim Kauf · Miete: <b id="mieteCt" style="color:var(--ink)">–</b>, alles inklusive</p>
+    <details class="assump" style="margin-top:22px">
+      <summary><span id="einheitH2">Was kostet ein Spülgang?</span></summary>
+      <div class="inner">
+        <div class="spuelhead">
+          <p class="big m" id="totalCt">–</p>
+          <p style="font-size:14px;color:var(--grey)"><span id="einheitCtLabel">je Spülgang</span> beim Kauf · Miete: <b id="mieteCt" style="color:var(--ink)">–</b>, alles inklusive</p>
+        </div>
+        <table class="legend"><tbody id="rows"></tbody></table>
+        <p class="note" id="foot"></p>
       </div>
-      <div class="bar" id="bar" role="img" aria-label="Kostenzusammensetzung je Spülgang"></div>
-      <table class="legend"><tbody id="rows"></tbody></table>
-      <p class="note" id="foot"></p>
-    </div>
-
-    <div class="panel" style="margin-top:22px">
-      <h2>Kostenverlauf im Vergleich</h2>
-      <div class="chartbox" id="chart"></div>
-      <p class="chartnote" id="chartNote"></p>
-    </div>
+    </details>
 
     <div class="panel" style="margin-top:22px">
       <h2>Kauf vs. Miete · Laufzeiten 1–5 Jahre</h2>
@@ -528,8 +524,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.5.0';
-const APP_STAND = '22.10.2026';
+const APP_VERSION = '1.6.0';
+const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
    Kategorien: einheit = Bezugseinheit (Singular), plural = Mehrzahl · posten = Verbrauchspositionen (preis € je Gebinde, je = Einheiten je Gebinde)
@@ -832,41 +828,10 @@ function gebHerleitung(c, r){
     ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate;
 }
 
+/* Kostenvergleich als eine Aussage statt Diagramm: ab welchem Monat hätte sich ein Kauf rechnerisch amortisiert */
 function drawChart(c, r){
   const L = c.L, laufM = r.lauf / L;
-  const W = 960, H = 340, padL = 66, padR = 20, padT = 18, padB = 42;
-  const maxY = Math.max(r.total, r.rate * L) * 1.06;
-  const x = t => padL + (W - padL - padR) * t / L;
-  const y = v => H - padB - (H - padB - padT) * v / maxY;
-  const kaufPts = [], mietePts = [];
-  for (let t = 0; t <= L; t++){
-    kaufPts.push(x(t).toFixed(1) + ',' + y(r.invest + laufM * t).toFixed(1));
-    mietePts.push(x(t).toFixed(1) + ',' + y(r.rate * t).toFixed(1));
-  }
   const cross = r.rate > laufM ? r.invest / (r.rate - laufM) : Infinity;
-  let grid = '';
-  for (let i = 1; i <= 4; i++){
-    const v = maxY * i / 5;
-    grid += '<line x1="' + padL + '" y1="' + y(v) + '" x2="' + (W-padR) + '" y2="' + y(v) + '" stroke="#E6E2DE"/>' +
-      '<text x="' + (padL-8) + '" y="' + (y(v)+4) + '" text-anchor="end" font-size="12" fill="#6B6B6B">' + eur.format(v) + '</text>';
-  }
-  let ticks = '';
-  for (let t = 12; t <= L; t += 12){
-    ticks += '<text x="' + x(t) + '" y="' + (H-padB+20) + '" text-anchor="middle" font-size="12" fill="#6B6B6B">' + (t/12) + '. Jahr</text>' +
-      '<line x1="' + x(t) + '" y1="' + (H-padB) + '" x2="' + x(t) + '" y2="' + (H-padB+5) + '" stroke="#6B6B6B"/>';
-  }
-  let mark = '';
-  if (cross > 0 && cross < L){
-    const cx = x(cross), cy = y(r.rate * cross);
-    mark = '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="#fff" stroke="#191919" stroke-width="2"/>' +
-      '<text x="' + Math.min(cx, W-190) + '" y="' + (cy-14) + '" font-size="12.5" fill="#191919" font-weight="600">Monat ' + Math.ceil(cross) + '</text>';
-  }
-  $('chart').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Kumulierte Kosten Kauf und Miete über die Laufzeit">' + grid +
-    '<line x1="' + padL + '" y1="' + (H-padB) + '" x2="' + (W-padR) + '" y2="' + (H-padB) + '" stroke="#191919" stroke-width="1.5"/>' + ticks +
-    '<polyline points="' + kaufPts.join(' ') + '" fill="none" stroke="#444444" stroke-width="3"/>' +
-    '<polyline points="' + mietePts.join(' ') + '" fill="none" stroke="#E3007A" stroke-width="3"/>' + mark +
-    '<rect x="' + (padL+10) + '" y="' + (padT+2) + '" width="14" height="4" fill="#444444"/><text x="' + (padL+30) + '" y="' + (padT+8) + '" font-size="12.5" fill="#191919">Kauf (Start mit Investition)</text>' +
-    '<rect x="' + (padL+10) + '" y="' + (padT+22) + '" width="14" height="4" fill="#E3007A"/><text x="' + (padL+30) + '" y="' + (padT+28) + '" font-size="12.5" fill="#191919">Miete (0 € Start)</text></svg>';
   $('chartNote').innerHTML = (cross > 0 && cross < L)
     ? 'Die Miete bleibt bis <b>Monat ' + Math.ceil(cross) + '</b> unter den kumulierten Kaufkosten – erst danach hätte sich der Kauf rechnerisch amortisiert. Bis dahin sind Kapital, Wartung und Risiko bei Stölner.'
     : 'Die Miete bleibt über die gesamte Laufzeit unter den kumulierten Kaufkosten.';
@@ -979,9 +944,8 @@ function calc(){
   const sum = comp.reduce((s,x) => s + x.v, 0);
   $('totalCt').textContent = ct(sum);
   $('mieteCt').textContent = ct(r.rate*c.L/r.wgTotal + r.neben);
-  $('bar').innerHTML = comp.map(x => '<div style="width:' + (x.v/sum*100) + '%;background:' + COLORS[x.k] + ';"></div>').join('');
   $('rows').innerHTML = comp.map(x =>
-    '<tr><td><span class="dot" style="background:' + COLORS[x.k] + '"></span>' + x.label + '</td>' +
+    '<tr><td>' + x.label + '</td>' +
     '<td>' + ct(x.v) + '</td><td>' + Math.round(x.v/sum*100) + ' %</td></tr>').join('');
   $('foot').textContent = 'Basis: ' + num(Math.round(r.wgTotal)) + ' ' + c.plural + ' in ' + c.L + ' Monaten' + (c.flat ? ' (Flatrate, Betrachtung 5 Jahre)' : c.saison ? ' (Saisonmiete, Betrachtung 5 Jahre, ' + c.saisonMonate + ' Zahlmonate je Jahr)' : '') +
     (r.litersPerWash > 0 ? ' · ' + r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je ' + c.einheit : '') +
@@ -1003,13 +967,13 @@ function calc(){
       '<th class="' + (isCur(v) ? 'cur' : '') + '"><button type="button" data-l="' + (v.flat ? 'flat' : v.saison ? 'saison' : v.L) + '">' + (v.flat ? 'Flatrate' : v.saison ? 'Saison' : v.L + ' Monate') + '</button><div class="hint" style="margin-top:4px">' + (v.flat ? 'jederzeit kündbar' : v.saison ? sM + ' Monate je Jahr' : (v.L/12) + (v.L === 12 ? ' Jahr' : ' Jahre')) + '</div></th>').join('') + '</tr></thead>' +
     '<tbody>' +
     '<tr><td>Mietrate je Monat</td>' + vcell(v => eur2.format(v.r.rate), 'rate') + '</tr>' +
-    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : v.saison ? eur.format(v.r.rate * sM * 5) + ' (5 Saisonen)' : eur.format(v.r.rate * v.L)) + '</tr>' +
+    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : v.saison ? eur.format(v.r.rate * sM * 5) : eur.format(v.r.rate * v.L)) + '</tr>' +
     '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct((v.saison ? v.r.rate * sM * 5 : v.r.rate * v.L) / v.r.wgTotal + v.r.neben)) + '</tr>' +
-    '<tr><td>Kauf gesamt ' + (c.schutz > 0 ? '(inkl. Rundumschutz)' : '(ohne Rundumschutz)') + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : eur.format(v.r.total)) + '</tr>' +
+    '<tr><td>Kauf gesamt' + (c.schutz > 0 ? '*' : '') + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : eur.format(v.r.total)) + '</tr>' +
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
-  $('varNote').textContent = 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
+  $('varNote').textContent = (c.schutz > 0 ? '* inkl. Rundumschutz. ' : '') + 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
     '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner. Ein Kauf des Geräts ist möglich, der Kaufpreis wird unabhängig von der Miete vereinbart.';
 
   drawChart(c, r);
