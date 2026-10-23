@@ -38,6 +38,14 @@ header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0
 .steps{display:flex;gap:22px;margin-top:24px;flex-wrap:wrap}
 .step{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--grey)}
 .step b{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--magenta);color:#fff;font-size:13px;font-weight:600}
+.atabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:0 0 20px;padding-bottom:10px}
+.atabs button{font:inherit;font-size:13.5px;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--ink)}
+.atabs button.on{background:var(--magenta);border-color:var(--magenta);color:#fff}
+.astand{font-size:13.5px;padding:10px 14px;border-radius:10px;background:var(--magenta-tint);margin-bottom:16px}
+.astep{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.astep-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--magenta);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+.ahelp{margin:14px 0 4px;font-size:13px}.ahelp summary{cursor:pointer;color:var(--grey);font-weight:600}.ahelp p{margin-top:8px}
+.astep-b{flex:1;min-width:0}.astep-t{font-weight:600;font-size:15px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;margin-bottom:22px}
 .panel h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--magenta);font-weight:600;margin-bottom:18px}
 .grid{display:grid;gap:14px}
@@ -283,30 +291,47 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <section class="panel" id="adminPanel" hidden aria-labelledby="sa">
   <h2 id="sa">Administration</h2>
 
-  <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">Produkt-Kategorien</h3>
-  <div style="overflow-x:auto">
-    <table id="katTable" style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px">
-      <thead>
-        <tr style="text-align:left;color:var(--grey)">
-          <th style="padding:6px 8px 6px 0;font-weight:500">Kategorie</th>
-          <th style="padding:6px 8px;font-weight:500">Einheit (Einzahl)</th>
-          <th style="padding:6px 8px;font-weight:500">Einheit (Mehrzahl)</th>
-          <th style="padding:6px 8px;font-weight:500">Wasseraufbereitung</th>
-          <th style="padding:6px 8px;font-weight:500">Bedarfsschätzung</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div class="atabs" role="tablist">
+    <button type="button" role="tab" data-tab="start" class="on">Import & Veröffentlichen</button>
+    <button type="button" role="tab" data-tab="geraete">Geräte</button>
+    <button type="button" role="tab" data-tab="rubriken">Rubriken & Verbrauch</button>
+    <button type="button" role="tab" data-tab="wasser">Wasser & Zubehör</button>
+    <button type="button" role="tab" data-tab="kond">Konditionen</button>
+    <button type="button" role="tab" data-tab="einst">Einstellungen</button>
   </div>
-  <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddKat" style="padding:8px 16px;font-size:13px">+ Kategorie hinzufügen</button></p>
-  <p class="hint">Einheit = womit die Kategorie rechnet (z. B. Spülgang, Bezug, Portion). Wasseraufbereitung nur aktivieren, wenn Filter/Kartuschen und Wasserhärte mitgerechnet werden sollen.</p>
-
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Verbrauchspositionen je Kategorie</h3>
-  <p class="hint" style="margin-bottom:8px">Kosten = Einheiten gesamt ÷ „Einheiten je Gebinde" × „Preis je Gebinde". Position mit Preis oder Einheiten 0 wird ignoriert.</p>
-  <div id="postenAdmin"></div>
-
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Modelle</h3>
+  <div class="atab" data-tab="start">
+    <div id="adminStand" class="astand"></div>
+    <div class="astep">
+      <div class="astep-n">1</div>
+      <div class="astep-b">
+        <div class="astep-t">Gerätematrix importieren</div>
+        <p class="hint" style="margin:2px 0 10px">Geraetematrix_Mietkalkulator.xlsx wählen. Live gehen nur fertige Geräte (Status „aktiv“, alle Pflichtfelder befüllt) – alles andere wird zurückgehalten und in der Vorschau angezeigt.</p>
+        <label class="btn" style="padding:10px 20px;font-size:14px;cursor:pointer">Excel-Datei wählen …<input type="file" id="matrixImport" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></label>
+  <div id="matrixPreview" hidden style="margin-top:14px;border:1px solid var(--line);border-left:4px solid var(--magenta);border-radius:10px;padding:14px 18px;background:#fff">
+    <div style="font-weight:600;margin-bottom:6px">Gerätematrix – Vorschau der Änderungen</div>
+    <div id="matrixSummary" style="font-size:13.5px;line-height:1.55"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button type="button" class="btn" id="matrixApply" style="padding:9px 18px;font-size:14px">Übernehmen</button>
+      <button type="button" class="btn ghost" id="matrixCancel" style="padding:9px 18px;font-size:14px">Abbrechen</button>
+    </div>
+  </div>
+      </div>
+    </div>
+    <div class="astep">
+      <div class="astep-n">2</div>
+      <div class="astep-b">
+        <div class="astep-t">Für alle veröffentlichen</div>
+        <p class="hint" style="margin:2px 0 10px">Schreibt den aktuellen Stand ins GitHub-Repository – der Außendienst sieht ihn nach 1–2 Minuten beim nächsten Öffnen.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button type="button" class="btn" id="btnPublish" style="padding:10px 20px;font-size:14px">Für alle veröffentlichen</button>
+    <span id="publishStatus" style="font-size:13px;color:var(--grey)"></span>
+  </div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:6px">Einzelne Werte lassen sich in den Reitern oben auch direkt ändern – danach ebenfalls hier veröffentlichen. Dauerhaft gepflegt wird in der Matrix: der nächste Import überschreibt Änderungen, die nur hier gemacht wurden.</p>
+  </div>
+  <div class="atab" data-tab="geraete" hidden>
+  <h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Modelle</h3>
   <div style="overflow-x:auto">
     <table id="modelTable" style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:820px">
       <thead>
@@ -325,7 +350,35 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
   <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddModel" style="padding:8px 16px;font-size:13px">+ Modell hinzufügen</button></p>
 
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Wasseraufbereitung (Preise laut Brita-Konditionen, Stand Juli 2026)</h3>
+  </div>
+  <div class="atab" data-tab="rubriken" hidden>
+  <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">Produkt-Kategorien</h3>
+  <div style="overflow-x:auto">
+    <table id="katTable" style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px">
+      <thead>
+        <tr style="text-align:left;color:var(--grey)">
+          <th style="padding:6px 8px 6px 0;font-weight:500">Kategorie</th>
+          <th style="padding:6px 8px;font-weight:500">Einheit (Einzahl)</th>
+          <th style="padding:6px 8px;font-weight:500">Einheit (Mehrzahl)</th>
+          <th style="padding:6px 8px;font-weight:500">Wasseraufbereitung</th>
+          <th style="padding:6px 8px;font-weight:500">Bedarfsschätzung</th>
+          <th style="padding:6px 8px;font-weight:500">Lieferung & Montage €</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddKat" style="padding:8px 16px;font-size:13px">+ Kategorie hinzufügen</button></p>
+  <p class="hint">Einheit = womit die Kategorie rechnet (z. B. Spülgang, Bezug, Portion). Wasseraufbereitung nur aktivieren, wenn Filter/Kartuschen und Wasserhärte mitgerechnet werden sollen.</p>
+
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Verbrauchspositionen je Kategorie</h3>
+  <p class="hint" style="margin-bottom:8px">Kosten = Einheiten gesamt ÷ „Einheiten je Gebinde" × „Preis je Gebinde". Position mit Preis oder Einheiten 0 wird ignoriert.</p>
+  <div id="postenAdmin"></div>
+
+  </div>
+  <div class="atab" data-tab="wasser" hidden>
+  <h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Wasseraufbereitung</h3>
   <div style="overflow-x:auto">
     <table id="waterTable" style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px">
       <thead>
@@ -352,7 +405,9 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aIqL">iQ Meter Liste (€)</label><input type="number" id="aIqL" min="0" step="1"></div>
   </div>
 
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Konditionen Mietmodell</h3>
+  </div>
+  <div class="atab" data-tab="kond" hidden>
+  <h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Konditionen Mietmodell</h3>
   <div class="grid g3">
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
@@ -362,13 +417,30 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
     <div><label for="aGebJahre">Bemessung unbestimmte Dauer (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
     <div><label for="aUst">USt-Satz in der Bemessung (%)</label><input type="number" id="aUst" min="0" max="30" step="1"></div>
-    <div style="align-self:end;font-size:12.5px;color:var(--grey);padding-bottom:11px">Nach Vertragsende: Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.</div>
   </div>
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Finanzierung & Pauschalen</h3>
+  <div class="grid g3">
+    <div><label for="aZins">Zins p. a. (%)</label><input type="number" id="aZins" min="0" max="20" step="0.1"></div>
+    <div><label for="aMindest">Mindestrate € / Monat (netto)</label><input type="number" id="aMindest" min="0" step="1"></div>
+    <div><label for="aMontModus">Lieferung & Montage</label><select id="aMontModus"><option value="rate">in die Rate eingerechnet</option><option value="einmalig">einmalig, mit der 1. Rate</option></select></div>
+  </div>
+  <div style="margin-top:12px"><label style="font-size:13px;color:var(--grey)">Restwert am Laufzeitende in % des Gerätepreises</label>
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(70px,1fr));gap:10px;margin-top:6px">
+      <div><label for="aRw12" style="font-size:12px">12 Mon.</label><input type="number" id="aRw12" min="0" max="90" step="1"></div>
+      <div><label for="aRw24" style="font-size:12px">24 Mon.</label><input type="number" id="aRw24" min="0" max="90" step="1"></div>
+      <div><label for="aRw36" style="font-size:12px">36 Mon.</label><input type="number" id="aRw36" min="0" max="90" step="1"></div>
+      <div><label for="aRw48" style="font-size:12px">48 Mon.</label><input type="number" id="aRw48" min="0" max="90" step="1"></div>
+      <div><label for="aRw60" style="font-size:12px">60 Mon. · Flat · Saison</label><input type="number" id="aRw60" min="0" max="90" step="1"></div>
+    </div>
+  </div>
+  <details class="ahelp"><summary>Erläuterungen: Finanzierung, Saisonmiete, Rechtsgeschäftsgebühr</summary>
+<p class="hint" style="margin-top:8px"><b>So wirken die Werte:</b> Das gebundene Kapital (Gerät, Wasseraufbereitung, iQ Meter, Rundumschutz, Montage in der Rate) wird als Annuität mit dem Zins über die Laufzeit verteilt; der Restwert bleibt bei Stölner und senkt die Rate. Lieferung & Montage € je Rubrik: Reiter „Rubriken & Verbrauch“. Die Mindestrate greift, wenn die kalkulierte Rate darunter liegt. Alle Werte 0 = Rechnung wie bisher.</p>
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
 
   <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: Mietdauer + 3 Jahre (der Vertrag verlängert sich danach auf unbestimmte Zeit). Flatrate: 3 Jahresentgelte. Saisonmiete: 5 Saisonen (konservativ – mit dem Steuerberater zu bestätigen). Bemessung bis 150 € ist gebührenfrei.<br>
   <b>Pflicht der Stölner:</b> Gebühr selbst berechnen und bis zum <b>15. des zweitfolgenden Monats</b> nach Unterzeichnung über FinanzOnline an das Finanzamt Österreich – Dienststelle Sonderzuständigkeiten entrichten (auch wenn der Mieter sie trägt). Den <b>Selbstberechnungsvermerk</b> im Mietvertrag auf jeder Ausfertigung mit Datum ausfüllen und unterschreiben. Satz auf 0 setzen, um die Position überall auszublenden.</p>
+</details>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Rundumschutz-Staffel (netto Listenpreis)</h3>
   <div style="overflow-x:auto">
@@ -385,7 +457,9 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
   <p style="margin-top:10px"><button type="button" class="btn ghost" id="btnAddSchutz" style="padding:8px 16px;font-size:13px">+ Stufe hinzufügen</button></p>
   <p class="hint">Der Rundumschutz wird automatisch aus dem Listenpreis abgeleitet. Über der höchsten Stufe entfällt er.</p>
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Sonstiges</h3>
+  </div>
+  <div class="atab" data-tab="einst" hidden>
+  <h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Texte, Kontakt & Strom</h3>
   <div class="grid g3">
     <div><label for="aKwh">Strom je Einheit (kWh)</label><input type="number" id="aKwh" min="0" step="0.05"></div>
     <div><label for="aStrom">Strompreis (€/kWh)</label><input type="number" id="aStrom" min="0" step="0.01"></div>
@@ -396,13 +470,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aPin">Admin-PIN</label><input type="text" id="aPin" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px"></div>
   </div>
   <p class="hint" style="margin-top:8px">Der PIN ist ein Sichtschutz für Präsentationen, keine echte Zugriffskontrolle – die Seite ist statisch und ihr Code öffentlich einsehbar.</p>
-
-  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Veröffentlichen</h3>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-    <button type="button" class="btn" id="btnPublish" style="padding:10px 20px;font-size:14px">Für alle veröffentlichen</button>
-    <span id="publishStatus" style="font-size:13px;color:var(--grey)"></span>
-  </div>
-  <details style="margin-bottom:12px;font-size:13px">
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">GitHub-Zugang & Sicherung</h3>
+  <details open style="margin-bottom:12px;font-size:13px">
     <summary style="cursor:pointer;color:var(--grey)">GitHub-Zugang für das Veröffentlichen <span id="ghTokenState"></span></summary>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center">
       <input type="password" id="ghToken" autocomplete="off" placeholder="GitHub-Token (github_pat_…)" style="flex:1;min-width:240px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px">
@@ -414,19 +483,10 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div style="display:flex;gap:10px;flex-wrap:wrap">
     <button type="button" class="btn ghost" id="btnExport" style="padding:10px 20px;font-size:14px">config.json exportieren</button>
     <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">config.json importieren<input type="file" id="fileImport" accept=".json,application/json" style="display:none"></label>
-    <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">Gerätematrix importieren (Excel)<input type="file" id="matrixImport" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></label>
     <button type="button" class="btn ghost" id="btnDiscard" style="padding:10px 20px;font-size:14px">Lokale Änderungen verwerfen</button>
   </div>
-  <div id="matrixPreview" hidden style="margin-top:14px;border:1px solid var(--line);border-left:4px solid var(--magenta);border-radius:10px;padding:14px 18px;background:#fff">
-    <div style="font-weight:600;margin-bottom:6px">Gerätematrix – Vorschau der Änderungen</div>
-    <div id="matrixSummary" style="font-size:13.5px;line-height:1.55"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-      <button type="button" class="btn" id="matrixApply" style="padding:9px 18px;font-size:14px">Übernehmen</button>
-      <button type="button" class="btn ghost" id="matrixCancel" style="padding:9px 18px;font-size:14px">Abbrechen</button>
-    </div>
+  <p class="hint" style="margin-top:10px">config.json exportieren = Sicherung bzw. manuelles Hochladen ohne GitHub-Zugang. „Lokale Änderungen verwerfen“ setzt dieses Gerät auf den veröffentlichten Stand zurück.</p>
   </div>
-  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Live gehen nur fertige Geräte: Status „aktiv“ (oder „neu“) und alle Pflichtfelder befüllt – „prüfen“ und unvollständige Zeilen werden zurückgehalten. Dazu Rubriken (nur mit fertigem Gerät), Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Nach dem Übernehmen „Für alle veröffentlichen“ – dann gilt es in 1–2 Minuten für den ganzen Außendienst.</p>
-  <p class="hint" style="margin-top:10px">„Für alle veröffentlichen“ schreibt den aktuellen Stand (inkl. aller Admin-Änderungen auf diesem Gerät) als config.json direkt ins GitHub-Repository; nach 1–2 Minuten lädt jeder Kalkulator beim nächsten Öffnen die neuen Werte. Ohne GitHub-Zugang: config.json exportieren und von Hand hochladen.</p>
 </section>
 
 
@@ -452,6 +512,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incGeraet">Gerät, Wasseraufbereitung, iQ Meter</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incVerbrauch">Spülmittel, Trockner, Kartuschen</span></td><td></td></tr>
           <tr><td class="inc"><svg viewBox="0 0 24 24" fill="none" stroke="#E3007A" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg><span id="incSchutz">Rundumschutz + Wartung</span></td><td></td></tr>
+          <tr id="mMontRow" hidden><td class="inc">Lieferung & Montage · einmalig, mit der 1. Rate</td><td id="mMont">–</td></tr>
           <tr id="mGebRow" hidden><td class="inc" id="mGebLabel">Rechtsgeschäftsgebühr (einmalig)</td><td id="mGeb">–</td></tr>
           <tr><td class="inc" id="mTotalLabel">Gesamt <span class="lz">5 Jahre</span></td><td id="mTotal">–</td></tr>
           <tr><td class="inc" id="mWgLabel">je Spülgang (inkl. Nebenkosten)</td><td id="mWg">–</td></tr>
@@ -502,7 +563,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <button class="btn ghost" type="button" id="btnVertrag">Mietvertrag erstellen</button>
       <button class="btn ghost" type="button" id="btnShare">Kalkulation teilen</button>
       <button class="btn ghost" type="button" onclick="window.print()">Zusammenfassung drucken</button>
-      <p class="mock">Beispielrechnung, Montage exkl. – dein verbindliches Angebot erstellen wir nach der Wasseranalyse vor Ort.</p>
+      <p class="mock" id="montageHint">Beispielrechnung, Montage exkl. – dein verbindliches Angebot erstellen wir nach der Wasseranalyse vor Ort.</p>
     </div>
   </section>
 </main>
@@ -537,7 +598,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -620,6 +681,13 @@ const FACTORY = {
      ust: USt-Satz – zaehlt zur Bemessung, weil der Vertrag "zzgl. USt" vereinbart
      gebuehrFreigrenze: Bemessung bis zu diesem Wert ist gebuehrenfrei (150 €) */
   gebuehrSatz: 1, gebuehrTraeger: 'mieter', gebuehrJahre: 3, ust: 20, gebuehrFreigrenze: 150,
+  /* Finanzierung & Pauschalen – Startwert 0 = keine Auswirkung auf die Rate
+     zins: Refinanzierungszins % p. a. (Annuität auf das gebundene Kapital)
+     restwert: Restwert des Geräts in % des Gerätepreises am Laufzeitende (Flatrate/Saison: Wert für 60 Monate)
+     montageModus: 'rate' = Lieferung & Montage in die Rate eingerechnet · 'einmalig' = separat mit der 1. Rate
+       (Betrag je Rubrik: kategorien[].montage)
+     mindestrate: Untergrenze der Monatsrate in € netto */
+  zins: 0, restwert: {12:0, 24:0, 36:0, 48:0, 60:0}, montageModus: 'rate', mindestrate: 0,
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
   leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
@@ -648,12 +716,13 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','ust','gebuehrFreigrenze','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
-  ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','ust','gebuehrFreigrenze','zins','mindestrate','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  if (over.restwert && typeof over.restwert === 'object') [12,24,36,48,60].forEach(L => { if (typeof over.restwert[L] === 'number') out.restwert[L] = over.restwert[L]; });
+  ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger','montageModus'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
   return out;
 }
 
-function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(CONFIG)); } catch(e){} }
+function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(CONFIG)); } catch(e){} if (typeof adminStand === 'function') adminStand(); }
 function loadLocal(){ try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 
 /* Zahlmonate je Jahr bei Saisonmiete – 1 bis 12, Standard 8 */
@@ -787,7 +856,9 @@ function currentConfig(){
     gebuehrTraeger: CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter',
     gebuehrJahre: Math.min(18, Math.max(1, +CONFIG.gebuehrJahre || 3)),
     ust: typeof CONFIG.ust === 'number' ? Math.min(30, Math.max(0, CONFIG.ust)) : 20,
-    gebuehrFreigrenze: typeof CONFIG.gebuehrFreigrenze === 'number' ? Math.max(0, CONFIG.gebuehrFreigrenze) : 150
+    gebuehrFreigrenze: typeof CONFIG.gebuehrFreigrenze === 'number' ? Math.max(0, CONFIG.gebuehrFreigrenze) : 150,
+    montage: Math.max(0, +kat.montage || 0), montageModus: CONFIG.montageModus === 'einmalig' ? 'einmalig' : 'rate',
+    zins: Math.min(20, Math.max(0, +CONFIG.zins || 0)), restwert: CONFIG.restwert || {}, mindestrate: Math.max(0, +CONFIG.mindestrate || 0)
   };
 }
 
@@ -798,7 +869,9 @@ function compute(c){
   /* Kartuschenbedarf = Einheiten × Liter je Einheit ÷ Kapazität (härtekorrigiert) · Osmose: Membrantausch 1× jährlich */
   const kartN = !c.hatWasser ? 0 : (c.kap > 0 ? wgTotal * litersPerWash * c.dh / 10 / c.kap : c.L / 12);
   const schutzL = c.schutz; /* Rundumschutz: einmalig, voller Betrag – wie Beispielrechnung V2 */
-  const invest = c.geraet + c.filter + c.iq + schutzL;
+  /* Kauf: Investition inkl. Lieferung & Montage (fairer Vergleich) */
+  const montage = c.montage || 0, montEinmalig = c.montageModus === 'einmalig' ? montage : 0;
+  const invest = c.geraet + c.filter + c.iq + schutzL + montage;
   /* Verbrauchspositionen der Kategorie: Kosten = Einheiten gesamt ÷ Einheiten je Gebinde × Preis je Gebinde */
   const postenKosten = c.posten.reduce((s, p) => s + wgTotal / p.je * p.preis, 0);
   /* Wartungsaufgaben: €/Jahr × Laufzeit in Jahren */
@@ -807,7 +880,15 @@ function compute(c){
   const total = invest + lauf;
   /* Saisonfaktor: dieselbe Jahressumme auf weniger Zahlmonate verteilt (1 = ganzjährige Zahlung) */
   const sf = c.saisonFaktor || 1;
-  const basisRate = total / c.L * (1 + c.zuschlag) * sf;
+  /* Miete: gebundenes Kapital (ohne separat verrechnete Montage) als Annuität mit Restwert,
+     laufende Kosten linear. Zins 0 und Restwert 0 → identisch mit (Kapital + laufend) / Laufzeit. */
+  const kapital = invest - montEinmalig;
+  const rwPct = (c.restwert || {})[(c.flat || c.saison) ? 60 : c.L] || 0;
+  const restwert = Math.min(c.geraet, c.geraet * rwPct / 100);
+  const im = (c.zins || 0) / 100 / 12, n = c.L;
+  const kapRate = im > 0 ? (kapital - restwert / Math.pow(1 + im, n)) * im / (1 - Math.pow(1 + im, -n)) : (kapital - restwert) / n;
+  const zinsKosten = kapRate * n - (kapital - restwert);
+  const basisRate = (im > 0 ? kapRate * n + lauf : kapital - restwert + lauf) / c.L * (1 + c.zuschlag) * sf;
   /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG, USP-Merkblatt Stand 1.1.2026):
      Bemessung = Monatsentgelt INKL. USt (Vertrag vereinbart "zzgl. USt") × Monate.
      Monate je Vertragsart – richtet sich nach Punkt 3/4 des Mietvertrags:
@@ -824,12 +905,16 @@ function compute(c){
   const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * 5 : c.L + unbestM));
   const inRate = c.gebuehrTraeger === 'miete' && gSatz > 0;
   const nenner = 1 - gSatz * ustF * gebMonate * (1 + c.zuschlag) * sf / c.L;
-  const rate = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
-  const gebBemessung = rate * ustF * gebMonate;
+  const rateKalk = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
+  /* Mindestrate: Untergrenze der Monatsrate */
+  const minAktiv = (c.mindestrate || 0) > rateKalk;
+  const rate = minAktiv ? c.mindestrate : rateKalk;
+  /* einmalige Leistungen (separat verrechnete Montage) zählen zur Gebühren-Bemessung */
+  const gebBemessung = gSatz <= 0 ? 0 : rate * ustF * gebMonate + montEinmalig * ustF;
   const gebuehr = (gSatz > 0 && gebBemessung > (c.gebuehrFreigrenze || 0)) ? Math.round(gebBemessung * gSatz * 100) / 100 : 0;
   const waterPerWash = litersPerWash/1000 * c.wp;
   const stromPerWash = c.kwh * c.strom;
-  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, basisRate, gebuehr, gebMonate, gebBemessung, gebUnbestM: unbestM, gebInRate: inRate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
+  return {weeks, wgTotal, kartN, litersPerWash, invest, lauf, postenKosten, wartungK, total, rate, basisRate, rateKalk, minAktiv, montage, montEinmalig, restwert, rwPct, zinsKosten, gebuehr, gebMonate, gebBemessung, gebUnbestM: unbestM, gebInRate: inRate, waterPerWash, stromPerWash, neben: waterPerWash + stromPerWash, schutzL};
 }
 
 /* Nachvollziehbare Herleitung der Gebuehr – fuer Fusszeile, Mietvertrag und Kalkulations-PDF */
@@ -838,7 +923,7 @@ function gebHerleitung(c, r){
     : c.saison ? r.gebMonate + ' Zahlmonate (5 Saisonen à ' + c.saisonMonate + ' Monate)'
     : r.gebMonate + ' Monate (' + c.L + ' Monate Mietdauer + ' + r.gebUnbestM + ' Monate für die anschließende unbestimmte Dauer)';
   return (c.gebuehrSatz).toLocaleString('de-AT') + ' % von ' + eur2.format(r.gebBemessung) +
-    ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate;
+    ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate + (r.montEinmalig > 0 ? ' + Lieferung & Montage ' + eur2.format(r.montEinmalig * (1 + c.ust/100)) + ' inkl. USt' : '');
 }
 
 /* Kostenvergleich als eine Aussage statt Diagramm: ab welchem Monat hätte sich ein Kauf rechnerisch amortisiert */
@@ -913,10 +998,14 @@ function calc(){
   $('dhOut').textContent = c.dh + ' °dH' + (c.osmose ? ' · o. Einfluss' : '');
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
-  $('mieteSub').textContent = '0 € Investition · SEPA-Einzug · ' +
+  $('mieteSub').textContent = (r.montEinmalig > 0 ? 'Kein Gerätekauf' : '0 € Investition') + ' · SEPA-Einzug · ' +
     (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · 5 Saisonen' : c.L + ' Monate') +
-    ((r.gebuehr > 0 && !r.gebInRate) ? ' · 1. Einzug ' + eur2.format(r.rate + r.gebuehr) + ' (Rate + Gebühr)' : '');
-  $('incGeraet').textContent = c.hatWasser ? 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '') : 'Gerät inkl. Zubehör';
+    (((r.gebuehr > 0 && !r.gebInRate) || r.montEinmalig > 0) ? ' · 1. Einzug ' + eur2.format(r.rate + (r.gebInRate ? 0 : r.gebuehr) + r.montEinmalig) + ' (Rate' + (r.montEinmalig > 0 ? ' + Montage' : '') + ((r.gebuehr > 0 && !r.gebInRate) ? ' + Gebühr' : '') + ')' : '') +
+    (r.minAktiv ? ' · Mindestrate' : '');
+  $('mMontRow').hidden = !(r.montEinmalig > 0);
+  if (r.montEinmalig > 0) $('mMont').textContent = eur2.format(r.montEinmalig);
+  $('montageHint').textContent = (c.montage > 0 ? 'Beispielrechnung inkl. Lieferung & Montage' + (r.montEinmalig > 0 ? ' (einmalig, separat)' : '') : 'Beispielrechnung, Montage exkl.') + ' – dein verbindliches Angebot erstellen wir nach der Wasseranalyse vor Ort.';
+  $('incGeraet').textContent = (c.hatWasser ? 'Gerät, ' + c.waterName + (c.iq > 0 ? ', iQ Meter' : '') : 'Gerät inkl. Zubehör') + ((c.montage > 0 && c.montageModus !== 'einmalig') ? ', Lieferung & Montage' : '');
   $('incVerbrauch').textContent = c.hatWasser
     ? (c.osmose ? 'Spülmittel, Trockner, Membrantausch' : 'Spülmittel, Trockner, Kartuschen')
     : (c.posten.length ? 'Sämtliches Verbrauchsmaterial' : 'Verbrauch lt. Vereinbarung');
@@ -964,6 +1053,10 @@ function calc(){
     (r.litersPerWash > 0 ? ' · ' + r.litersPerWash.toLocaleString('de-AT',{maximumFractionDigits:1}) + ' l Wasser je ' + c.einheit : '') +
     (c.hatWasser ? ' · ' + Math.round(r.kartN*10)/10 + (c.osmose ? ' Membrantausch(e), härteunabhängig' : ' Filterkartuschen') + ' · Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') : '') +
     ' · Miete: eine Rate, alles inklusive – volle Kostensicherheit.' +
+    (r.zinsKosten > 0.5 ? ' · Finanzierung ' + c.zins.toLocaleString('de-AT') + ' % p. a. (' + eur.format(r.zinsKosten) + ' über die Laufzeit)' : '') +
+    (r.restwert > 0 ? ' · Restwert ' + r.rwPct.toLocaleString('de-AT') + ' % = ' + eur.format(r.restwert) + ' (bleibt bei Stölner)' : '') +
+    (c.montage > 0 ? ' · Lieferung & Montage ' + eur.format(c.montage) + (r.montEinmalig > 0 ? ' einmalig' : ' in der Rate') : '') +
+    (r.minAktiv ? ' · Mindestrate ' + eur2.format(c.mindestrate) + ' greift (kalkuliert ' + eur2.format(r.rateKalk) + ')' : '') +
     (r.gebuehr > 0 ? ' · Rechtsgeschäftsgebühr (§ 33 TP 5 GebG) ' + gebHerleitung(c, r) +
       ' = ' + eur2.format(r.gebuehr) + (r.gebInRate ? ', in der Rate enthalten' : ', gesondert ausgewiesen und mit der ersten Rate eingezogen') : '');
 
@@ -996,6 +1089,7 @@ function calc(){
 /* ===== Admin ===== */
 const inpStyle = 'width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px';
 function renderAdmin(){
+  adminStand();
   /* Kategorien */
   const ktb = document.querySelector('#katTable tbody');
   ktb.innerHTML = '';
@@ -1007,6 +1101,7 @@ function renderAdmin(){
       '<td style="padding:5px 8px"><input type="text" data-i="' + i + '" data-k="plural" value="" style="' + inpStyle + ';min-width:110px"></td>' +
       '<td style="padding:5px 8px;text-align:center"><input type="checkbox" data-i="' + i + '" data-k="wasser"' + (k.wasser ? ' checked' : '') + ' style="width:20px;height:20px;accent-color:var(--magenta)"></td>' +
       '<td style="padding:5px 8px;text-align:center"><input type="checkbox" data-i="' + i + '" data-k="schaetz"' + (k.schaetz ? ' checked' : '') + ' style="width:20px;height:20px;accent-color:var(--magenta)"></td>' +
+      '<td style="padding:5px 8px"><input type="number" min="0" step="10" data-i="' + i + '" data-k="montage" value="' + (+k.montage || 0) + '" style="' + inpStyle + ';min-width:96px"></td>' +
       '<td style="padding:5px 0 5px 8px"><button type="button" data-kdel="' + i + '" title="Kategorie löschen" style="font:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;width:38px;height:38px;cursor:pointer;color:var(--grey)">✕</button></td>';
     tr.querySelector('input[data-k="name"]').value = k.name;
     tr.querySelector('input[data-k="einheit"]').value = k.einheit || '';
@@ -1015,7 +1110,7 @@ function renderAdmin(){
   });
   ktb.querySelectorAll('input').forEach(inp => inp.oninput = () => {
     const i = +inp.dataset.i, k = inp.dataset.k;
-    CONFIG.kategorien[i][k] = (k === 'wasser' || k === 'schaetz') ? inp.checked : inp.value;
+    CONFIG.kategorien[i][k] = (k === 'wasser' || k === 'schaetz') ? inp.checked : k === 'montage' ? Math.max(0, +inp.value || 0) : inp.value;
     saveLocal(); buildKatSelect($('katSel').value); calc();
   });
   ktb.querySelectorAll('button[data-kdel]').forEach(btn => btn.onclick = () => {
@@ -1133,6 +1228,9 @@ function renderAdmin(){
   $('aGebTraeger').value = CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter';
   $('aGebJahre').value = CONFIG.gebuehrJahre || 3;
   $('aUst').value = typeof CONFIG.ust === 'number' ? CONFIG.ust : 20;
+  $('aZins').value = +CONFIG.zins || 0; $('aMindest').value = +CONFIG.mindestrate || 0;
+  $('aMontModus').value = CONFIG.montageModus === 'einmalig' ? 'einmalig' : 'rate';
+  [12,24,36,48,60].forEach(L => { $('aRw' + L).value = +(CONFIG.restwert || {})[L] || 0; });
   const stb = document.querySelector('#schutzTable tbody');
   stb.innerHTML = '';
   CONFIG.schutzStaffel.forEach((s, i) => {
@@ -1163,11 +1261,13 @@ function renderAdmin(){
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
                aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'],
-               aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aUst:['ust'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
+               aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aUst:['ust'], aZins:['zins'], aMindest:['mindestrate'], aMontModus:['montageModus'],
+               aRw12:['restwert','12'], aRw24:['restwert','24'], aRw36:['restwert','36'], aRw48:['restwert','48'], aRw60:['restwert','60'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
     const handler = () => {
       const raw = $(id).value;
-      const textFeld = ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger'].indexOf(path[0]) >= 0;
+      const textFeld = ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger','montageModus'].indexOf(path[0]) >= 0;
+      if (path[0] === 'restwert' && !CONFIG.restwert) CONFIG.restwert = {12:0, 24:0, 36:0, 48:0, 60:0};
       const val = textFeld ? raw : (+raw || 0);
       if (path[0] === 'agbUrl') $('agbLink').href = raw || '#';
       if (path.length === 2) CONFIG[path[0]][path[1]] = val; else CONFIG[path[0]] = val;
@@ -1222,6 +1322,24 @@ $('btnAddWater').onclick = () => {
 
 /* ===== Für alle veröffentlichen: config.json per GitHub-API ins Repository schreiben =====
    Token liegt nur im localStorage dieses Browsers (nie im Code, nie in der config.json). */
+/* ===== Admin-Reiter & Stand ===== */
+let PUBLISHED = null;
+document.querySelectorAll('.atabs button').forEach(b => b.onclick = () => showAdminTab(b.dataset.tab));
+function showAdminTab(t){
+  document.querySelectorAll('.atabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  document.querySelectorAll('.atab').forEach(d => d.hidden = d.dataset.tab !== t);
+  try { sessionStorage.setItem('stoelnerAdminTab', t); } catch(e){}
+}
+try { const t = sessionStorage.getItem('stoelnerAdminTab'); if (t && document.querySelector('.atab[data-tab="' + t + '"]')) showAdminTab(t); } catch(e){}
+function adminStand(){
+  const el = $('adminStand'); if (!el) return;
+  const kats = CONFIG.kategorien.map(k => k.name + ' ' + CONFIG.models.filter(m => m.kat === k.id).length).join(' · ');
+  const offen = PUBLISHED && JSON.stringify(CONFIG) !== JSON.stringify(PUBLISHED);
+  el.innerHTML = '<b>' + CONFIG.models.length + ' Geräte</b> · ' + kats + '<br>' + (offen
+    ? '<span style="color:#B00020;font-weight:600">● Nicht veröffentlichte Änderungen auf diesem Gerät</span> – der Außendienst sieht noch den alten Stand.'
+    : '<span style="color:#0F6E56;font-weight:600">● Alles veröffentlicht</span> – dieses Gerät zeigt denselben Stand wie der Außendienst.');
+}
+
 const GH_REPO = 'gm31279-hue/mietkalkulator', GH_BRANCH = 'main', GH_KEY = 'stoelnerGhToken';
 const ghGet = () => { try { return localStorage.getItem(GH_KEY) || ''; } catch(e){ return ''; } };
 function ghStateUi(){ $('ghTokenState').textContent = ghGet() ? '· hinterlegt ✓' : '· noch nicht hinterlegt'; }
@@ -1254,6 +1372,7 @@ async function publishConfig(){
     if (!p.ok) throw p;
     st.textContent = 'Veröffentlicht ' + new Date().toLocaleTimeString('de-AT', {hour:'2-digit', minute:'2-digit'}) + ' · in 1–2 Minuten für alle sichtbar';
     st.style.color = '#0F6E56';
+    PUBLISHED = clone(CONFIG); adminStand();
     return true;
   } catch(err){
     const code = err && err.status;
@@ -1345,7 +1464,7 @@ function parseMatrix(wb){
   /* Rubriken */
   const tR = mxTable(mxRows(wb, 'Rubriken'), 'Rubrik', null, false);
   if (!tR) throw new Error('Kopfzeile im Blatt „Rubriken“ nicht gefunden.');
-  const cR = {name:tR.col('Rubrik'), ein:tR.col('Einheit (Einzahl)'), mehr:tR.col('Einheit (Mehrzahl)'), wasser:tR.col('Wasseraufbereitung'), schaetz:tR.col('Bedarfsschätzung'), max:tR.col('Regler max'), verbrauch:tR.col('Verbrauchsmaterial')};
+  const cR = {name:tR.col('Rubrik'), ein:tR.col('Einheit (Einzahl)'), mehr:tR.col('Einheit (Mehrzahl)'), wasser:tR.col('Wasseraufbereitung'), schaetz:tR.col('Bedarfsschätzung'), max:tR.col('Regler max'), verbrauch:tR.col('Verbrauchsmaterial'), montage:tR.col('Lieferung')};
   const katIds = new Set();
   const kategorien = tR.data.filter(x => x.r[cR.name]).map(x => {
     const name = String(x.r[cR.name]).trim();
@@ -1360,6 +1479,9 @@ function parseMatrix(wb){
     const max = mxNum(x.r[cR.max]); if (max > 0) k.wgMax = max;
     if (alt && alt.platzhalterMenge) k.platzhalterMenge = true;
     k._verbrauch = cR.verbrauch >= 0 && mxJa(x.r[cR.verbrauch]);
+    /* Lieferung & Montage € je Rubrik – fehlt die Spalte, bleibt der bisherige Wert */
+    const mo = cR.montage >= 0 ? mxNum(x.r[cR.montage]) : null;
+    if (mo != null) k.montage = Math.max(0, mo); else if (alt && alt.montage) k.montage = alt.montage;
     return k;
   });
   if (!kategorien.length) throw new Error('Keine Rubriken gefunden.');
@@ -1460,10 +1582,16 @@ function parseMatrix(wb){
   const par = label => { const r = rK.find(x => x && mxNorm(x[0]).indexOf(mxNorm(label)) === 0); return r ? r[1] : null; };
   const pct = v => { const n = mxNum(v); return n == null ? null : (n < 1 ? Math.round(n * 1000) / 10 : n); };
   [['zuschlag','Zuschlag Miete',pct],['zuschlagFlat','Zuschlag Flatrate',pct],['zuschlagSaison','Zuschlag Saisonmiete',pct],
-   ['saisonMonate','Saisonmiete: Zahlmonate',mxNum],['gebuehrSatz','Rechtsgeschäftsgebühr',pct],['strom','Strompreis',mxNum]]
+   ['saisonMonate','Saisonmiete: Zahlmonate',mxNum],['gebuehrSatz','Rechtsgeschäftsgebühr',pct],['strom','Strompreis',mxNum],
+   ['zins','Zins',pct],['mindestrate','Mindestrate',mxNum]]
     .forEach(([k, label, fn]) => { const v = fn(par(label)); if (v != null) out[k] = v; });
   const tr = mxNorm(par('Gebühr trägt'));
   if (tr) out.gebuehrTraeger = tr.indexOf('st') === 0 ? 'miete' : 'mieter';
+  const mm = mxNorm(par('Lieferung & Montage'));
+  if (mm) out.montageModus = mm.indexOf('einmal') >= 0 ? 'einmalig' : 'rate';
+  const rw = {}; let rwDa = false;
+  [12,24,36,48,60].forEach(L => { const v = pct(par('Restwert ' + L)); if (v != null){ rw[L] = v; rwDa = true; } });
+  if (rwDa) out.restwert = Object.assign({}, CONFIG.restwert || {}, rw);
   const nZurueck = Object.values(zurueck).reduce((s, z) => s + Object.values(z).reduce((a, b) => a + b, 0), 0);
   return {cfg: out, warn, err, inaktiv, nZurueck};
 }
@@ -1490,10 +1618,19 @@ function matrixDiff(p){
   if (wegG.length) z.push('Entfernt: ' + wegG.map(m => m.name).join(', '));
   geaendert.forEach(g => z.push(g));
   const k = [];
-  [['zuschlag','Zuschlag Miete','%'],['zuschlagFlat','Zuschlag Flatrate','%'],['zuschlagSaison','Zuschlag Saison','%'],['saisonMonate','Saison-Zahlmonate',''],['gebuehrSatz','Gebühr','%'],['strom','Strom €/kWh','']]
+  [['zuschlag','Zuschlag Miete','%'],['zuschlagFlat','Zuschlag Flatrate','%'],['zuschlagSaison','Zuschlag Saison','%'],['saisonMonate','Saison-Zahlmonate',''],['gebuehrSatz','Gebühr','%'],['strom','Strom €/kWh',''],['zins','Zins','%'],['mindestrate','Mindestrate','€']]
     .forEach(([key, l, u]) => { if (p.cfg[key] != null && p.cfg[key] !== CONFIG[key]) k.push(l + ' ' + CONFIG[key] + u + ' → ' + p.cfg[key] + u); });
+  if (p.cfg.montageModus && p.cfg.montageModus !== CONFIG.montageModus) k.push('Montage: ' + (p.cfg.montageModus === 'einmalig' ? 'einmalig, separat' : 'in der Rate'));
+  if (p.cfg.restwert && JSON.stringify(p.cfg.restwert) !== JSON.stringify(CONFIG.restwert)) k.push('Restwerte ' + [12,24,36,48,60].map(L => L + ' M: ' + (p.cfg.restwert[L] || 0) + ' %').join(', '));
+  p.cfg.kategorien.forEach(kn => { const ka = CONFIG.kategorien.find(x => x.id === kn.id); if ((+(ka && ka.montage) || 0) !== (+kn.montage || 0)) k.push(kn.name + ': Montage ' + euro(+(ka && ka.montage) || 0) + ' → ' + euro(+kn.montage || 0)); });
   if (p.cfg.gebuehrTraeger && p.cfg.gebuehrTraeger !== CONFIG.gebuehrTraeger) k.push('Gebühr trägt: ' + (p.cfg.gebuehrTraeger === 'miete' ? 'Stölner' : 'Mieter'));
   if (p.cfg.schutzStaffel && JSON.stringify(p.cfg.schutzStaffel) !== JSON.stringify(CONFIG.schutzStaffel)) k.push('Rundumschutz-Staffel geändert');
+  /* Verbrauchsmaterial je Rubrik – Änderungen sichtbar machen (wirkt direkt auf die Rate) */
+  p.cfg.kategorien.forEach(kn => {
+    const ka = CONFIG.kategorien.find(x => x.id === kn.id);
+    const f = k2 => (k2 && k2.posten || []).map(x => x.name + ' ' + x.preis + '/' + x.je).join('; ') || 'keines';
+    if (ka && f(ka) !== f(kn)) k.push('<b>Verbrauchsmaterial ' + kn.name + ':</b> ' + f(ka) + ' → ' + f(kn));
+  });
   if (p.cfg.water && JSON.stringify(p.cfg.water) !== JSON.stringify(CONFIG.water)) k.push('Wasseraufbereitung geändert');
   if (p.cfg.iqMeter && JSON.stringify(p.cfg.iqMeter) !== JSON.stringify(CONFIG.iqMeter)) k.push('iQ Meter ' + euro(CONFIG.iqMeter.aktion) + ' → ' + euro(p.cfg.iqMeter.aktion));
   if (k.length) z.push('Konditionen: ' + k.join(' · '));
@@ -1525,7 +1662,7 @@ $('matrixApply').onclick = () => {
   if (!matrixPending) return;
   const p = matrixPending.cfg, neu = clone(CONFIG);
   neu.kategorien = p.kategorien; neu.models = p.models;
-  ['water','iqMeter','schutzStaffel','zuschlag','zuschlagFlat','zuschlagSaison','saisonMonate','gebuehrSatz','gebuehrTraeger','strom']
+  ['water','iqMeter','schutzStaffel','zuschlag','zuschlagFlat','zuschlagSaison','saisonMonate','gebuehrSatz','gebuehrTraeger','strom','zins','mindestrate','montageModus','restwert']
     .forEach(k => { if (p[k] != null) neu[k] = p[k]; });
   neu.version = FACTORY.version;
   CONFIG = neu; matrixPending = null; $('matrixPreview').hidden = true;
@@ -1644,7 +1781,7 @@ function vertragHtml(c, r, k){
     const verbrauch = c.hatWasser
       ? 'S\u00e4mtliches Verbrauchsmaterial (Sp\u00fclmittel, Glanztrockner, '+(c.osmose ? 'j\u00e4hrlicher Membrantausch' : 'Filterkartuschen')+')'
       : (c.posten.length ? 'S\u00e4mtliches Verbrauchsmaterial ('+c.posten.map(p => p.name).join(', ')+')' : '');
-    const teile = [verbrauch, c.schutz > 0 ? 'Rundumschutz' : '', 'Wartung', 'Technikereinsatz Mo\u2013Fr'].filter(x => x);
+    const teile = [verbrauch, c.schutz > 0 ? 'Rundumschutz' : '', 'Wartung', 'Technikereinsatz Mo\u2013Fr', (c.montage > 0 && c.montageModus !== 'einmalig') ? 'Lieferung und Montage' : ''].filter(x => x);
     return teile.join(', ') + (verbrauch ? '' : '<br><span style="color:#666">Verbrauchsmaterial ist nicht Bestandteil dieses Vertrags.</span>');
   })())+
   rows('Aufstellungsort', k.adresse||'lt. Mieter')+'</table>'+
@@ -1652,6 +1789,7 @@ function vertragHtml(c, r, k){
   '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', netto+' zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
+  (r.montEinmalig > 0 ? rows('Lieferung und Montage', eur2.format(r.montEinmalig)+' zzgl. gesetzlicher USt \u2013 einmalig; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
   (r.gebuehr > 0 ? rows('Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge (\u00a7 33 TP 5 GebG)', '<b>'+eur2.format(r.gebuehr)+'</b>'+(r.gebInRate
      ? ' \u2013 im Mietentgelt enthalten'
      : ' \u2013 einmalig, gesondert ausgewiesen; der Einzug erfolgt gemeinsam mit der ersten Monatsrate')+
@@ -1730,6 +1868,7 @@ function leadReportHtml(c, r, lead){
   rows('Betrieb', c.days+' Tage/Woche · '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ' · '+c.dh+' °dH' : ''))+
   rows('Inklusive', 'Gerät'+(c.hatWasser ? ', Wasseraufbereitung' : '')+((c.hatWasser || c.posten.length) ? ', Verbrauchsmaterial' : '')+(c.schutz > 0 ? ', Rundumschutz' : '')+', Wartung, Techniker Mo–Fr')+
   ((!c.hatWasser && !c.posten.length) ? rows('Nicht inklusive', 'Verbrauchsmaterial') : '')+
+  (c.montage > 0 ? rows('Lieferung & Montage', r.montEinmalig > 0 ? eur2.format(r.montEinmalig)+' · einmalig, Einzug mit der 1. Rate' : 'in der Rate enthalten') : '')+
   (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig, gesondert ausgewiesen, Einzug mit der 1. Rate')) : '')+
   rows('Nach Vertragsende', 'Rücknahme kostenlos · ein Kauf ist möglich, der Preis wird gesondert vereinbart')+'</table>'+
   '<h2>Alle Laufzeiten im Überblick</h2>'+
@@ -1819,6 +1958,7 @@ fetch('config.json', {cache:'no-store'})
   .catch(() => null)
   .then(remote => {
     if (remote) CONFIG = mergeConfig(FACTORY, remote);
+    PUBLISHED = clone(CONFIG);
     const local = loadLocal();
     if (local){
       /* Katalog-Update: Stammt die lokal gespeicherte Konfiguration aus einer älteren
