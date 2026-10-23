@@ -524,7 +524,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -967,13 +967,11 @@ function calc(){
       '<th class="' + (isCur(v) ? 'cur' : '') + '"><button type="button" data-l="' + (v.flat ? 'flat' : v.saison ? 'saison' : v.L) + '">' + (v.flat ? 'Flatrate' : v.saison ? 'Saison' : v.L + ' Monate') + '</button><div class="hint" style="margin-top:4px">' + (v.flat ? 'jederzeit kündbar' : v.saison ? sM + ' Monate je Jahr' : (v.L/12) + (v.L === 12 ? ' Jahr' : ' Jahre')) + '</div></th>').join('') + '</tr></thead>' +
     '<tbody>' +
     '<tr><td>Mietrate je Monat</td>' + vcell(v => eur2.format(v.r.rate), 'rate') + '</tr>' +
-    '<tr><td>Miete gesamt</td>' + vcell(v => v.flat ? 'unbefristet' : v.saison ? eur.format(v.r.rate * sM * 5) : eur.format(v.r.rate * v.L)) + '</tr>' +
     '<tr><td>Miete je ' + c.einheit + '</td>' + vcell(v => ct((v.saison ? v.r.rate * sM * 5 : v.r.rate * v.L) / v.r.wgTotal + v.r.neben)) + '</tr>' +
-    '<tr><td>Kauf gesamt' + (c.schutz > 0 ? '*' : '') + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : eur.format(v.r.total)) + '</tr>' +
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
-  $('varNote').textContent = (c.schutz > 0 ? '* inkl. Rundumschutz. ' : '') + 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
+  $('varNote').textContent = 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
     '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner. Ein Kauf des Geräts ist möglich, der Kaufpreis wird unabhängig von der Miete vereinbart.';
 
   drawChart(c, r);
