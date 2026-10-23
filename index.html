@@ -398,8 +398,21 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <p class="hint" style="margin-top:8px">Der PIN ist ein Sichtschutz für Präsentationen, keine echte Zugriffskontrolle – die Seite ist statisch und ihr Code öffentlich einsehbar.</p>
 
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Veröffentlichen</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button type="button" class="btn" id="btnPublish" style="padding:10px 20px;font-size:14px">Für alle veröffentlichen</button>
+    <span id="publishStatus" style="font-size:13px;color:var(--grey)"></span>
+  </div>
+  <details style="margin-bottom:12px;font-size:13px">
+    <summary style="cursor:pointer;color:var(--grey)">GitHub-Zugang für das Veröffentlichen <span id="ghTokenState"></span></summary>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center">
+      <input type="password" id="ghToken" autocomplete="off" placeholder="GitHub-Token (github_pat_…)" style="flex:1;min-width:240px;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;font-size:13.5px">
+      <button type="button" class="btn ghost" id="ghTokenSave" style="padding:9px 16px;font-size:13.5px">Speichern</button>
+      <button type="button" class="btn ghost" id="ghTokenDel" style="padding:9px 16px;font-size:13.5px">Entfernen</button>
+    </div>
+    <p class="hint" style="margin-top:8px">Einmalig je Gerät: Fine-grained Token auf github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens. Nur das Repository <b>spueler-konfigurator</b>, Berechtigung <b>Contents: Read and write</b>, Ablauf z. B. 1 Jahr. Der Token wird nur in diesem Browser gespeichert, nicht im Kalkulator.</p>
+  </details>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
-    <button type="button" class="btn" id="btnExport" style="padding:10px 20px;font-size:14px">config.json exportieren</button>
+    <button type="button" class="btn ghost" id="btnExport" style="padding:10px 20px;font-size:14px">config.json exportieren</button>
     <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">config.json importieren<input type="file" id="fileImport" accept=".json,application/json" style="display:none"></label>
     <label class="btn ghost" style="padding:10px 20px;font-size:14px;cursor:pointer">Gerätematrix importieren (Excel)<input type="file" id="matrixImport" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></label>
     <button type="button" class="btn ghost" id="btnDiscard" style="padding:10px 20px;font-size:14px">Lokale Änderungen verwerfen</button>
@@ -412,8 +425,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <button type="button" class="btn ghost" id="matrixCancel" style="padding:9px 18px;font-size:14px">Abbrechen</button>
     </div>
   </div>
-  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Übernommen werden Geräte (ohne Status „inaktiv“), Rubriken, Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Danach config.json exportieren, damit es für alle gilt.</p>
-  <p class="hint" style="margin-top:10px">So gehen Änderungen live: config.json exportieren und im GitHub-Repository neben der index.html ablegen (bestehende Datei ersetzen, committen). Die Seite lädt die config.json beim Öffnen automatisch – ohne sie gelten die eingebauten Standardwerte.</p>
+  <p class="hint" style="margin-top:10px"><b>Gerätematrix:</b> Geraetematrix_Mietkalkulator.xlsx pflegen und hier importieren. Übernommen werden Geräte (ohne Status „inaktiv“), Rubriken, Wasseraufbereitung, iQ Meter, Verbrauchsmaterial, Rundumschutz-Staffel und Mietkonditionen. Abgelaufene Aktionspreise werden nicht übernommen. Nach dem Übernehmen „Für alle veröffentlichen“ – dann gilt es in 1–2 Minuten für den ganzen Außendienst.</p>
+  <p class="hint" style="margin-top:10px">„Für alle veröffentlichen“ schreibt den aktuellen Stand (inkl. aller Admin-Änderungen auf diesem Gerät) als config.json direkt ins GitHub-Repository; nach 1–2 Minuten lädt jeder Kalkulator beim nächsten Öffnen die neuen Werte. Ohne GitHub-Zugang: config.json exportieren und von Hand hochladen.</p>
 </section>
 
 
@@ -524,7 +537,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.7.0';
 const APP_STAND = '23.10.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1207,6 +1220,56 @@ $('btnAddWater').onclick = () => {
   saveLocal(); buildWaterSelect($('waterSel').value); renderAdmin(); calc();
 };
 
+/* ===== Für alle veröffentlichen: config.json per GitHub-API ins Repository schreiben =====
+   Token liegt nur im localStorage dieses Browsers (nie im Code, nie in der config.json). */
+const GH_REPO = 'gm31279-hue/spueler-konfigurator', GH_BRANCH = 'main', GH_KEY = 'stoelnerGhToken';
+const ghGet = () => { try { return localStorage.getItem(GH_KEY) || ''; } catch(e){ return ''; } };
+function ghStateUi(){ $('ghTokenState').textContent = ghGet() ? '· hinterlegt ✓' : '· noch nicht hinterlegt'; }
+$('ghTokenSave').onclick = () => {
+  const t = $('ghToken').value.trim();
+  if (!/^(github_pat_|ghp_)/.test(t)){ alert('Das sieht nicht wie ein GitHub-Token aus (beginnt mit github_pat_ …).'); return; }
+  try { localStorage.setItem(GH_KEY, t); } catch(e){ alert('Speichern im Browser nicht möglich.'); return; }
+  $('ghToken').value = ''; ghStateUi();
+};
+$('ghTokenDel').onclick = () => { try { localStorage.removeItem(GH_KEY); } catch(e){} ghStateUi(); };
+ghStateUi();
+
+async function publishConfig(){
+  const token = ghGet();
+  if (!token){ alert('Bitte zuerst den GitHub-Zugang hinterlegen (Abschnitt „GitHub-Zugang für das Veröffentlichen“).'); return false; }
+  const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/config.json';
+  const h = {Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json'};
+  const st = $('publishStatus'); st.textContent = 'Wird veröffentlicht …'; st.style.color = 'var(--grey)';
+  $('btnPublish').disabled = true;
+  try {
+    let sha;
+    const g = await fetch(api + '?ref=' + GH_BRANCH, {headers: h, cache: 'no-store'});
+    if (g.ok) sha = (await g.json()).sha;
+    else if (g.status !== 404) throw g;
+    const json = JSON.stringify(clone(CONFIG), null, 2) + '\n';
+    const content = btoa(unescape(encodeURIComponent(json)));
+    const anzahl = CONFIG.models.length;
+    const p = await fetch(api, {method: 'PUT', headers: Object.assign({'Content-Type': 'application/json'}, h),
+      body: JSON.stringify({message: 'config.json veröffentlicht aus dem Admin-Bereich (' + anzahl + ' Geräte, ' + new Date().toLocaleString('de-AT') + ')', content, sha, branch: GH_BRANCH})});
+    if (!p.ok) throw p;
+    st.textContent = 'Veröffentlicht ' + new Date().toLocaleTimeString('de-AT', {hour:'2-digit', minute:'2-digit'}) + ' · in 1–2 Minuten für alle sichtbar';
+    st.style.color = '#0F6E56';
+    return true;
+  } catch(err){
+    const code = err && err.status;
+    const msg = code === 401 ? 'GitHub-Token ungültig oder abgelaufen – bitte neu hinterlegen.'
+      : code === 403 || code === 404 ? 'Der Token hat keine Schreibrechte auf ' + GH_REPO + ' (Contents: Read and write nötig).'
+      : code === 409 ? 'Jemand hat gleichzeitig veröffentlicht – bitte noch einmal klicken.'
+      : 'Veröffentlichen fehlgeschlagen' + (code ? ' (Fehler ' + code + ')' : ' – Internetverbindung prüfen') + '.';
+    st.textContent = msg; st.style.color = '#B00020';
+    return false;
+  } finally { $('btnPublish').disabled = false; }
+}
+$('btnPublish').onclick = () => {
+  if (!confirm('Aktuellen Stand (' + CONFIG.models.length + ' Geräte) für alle veröffentlichen? Der Außendienst sieht ihn beim nächsten Öffnen des Kalkulators.')) return;
+  publishConfig();
+};
+
 $('btnExport').onclick = () => {
   const out = clone(CONFIG);
   const blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json'});
@@ -1448,7 +1511,8 @@ $('matrixApply').onclick = () => {
   neu.version = FACTORY.version;
   CONFIG = neu; matrixPending = null; $('matrixPreview').hidden = true;
   saveLocal(); buildKatSelect($('katSel').value); buildSelect(); loadModelFields(); renderAdmin(); calc();
-  alert('Gerätematrix übernommen. Für alle sichtbar wird sie erst mit „config.json exportieren“ und dem Upload ins Repository.');
+  if (confirm('Gerätematrix übernommen.\n\nJetzt gleich für alle veröffentlichen?')) publishConfig();
+  else $('publishStatus').textContent = 'Noch nicht veröffentlicht – nur auf diesem Gerät sichtbar.';
 };
 
 $('btnDiscard').onclick = () => {
