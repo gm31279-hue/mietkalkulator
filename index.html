@@ -274,13 +274,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="srow">
       <label for="runtime">Laufzeit</label>
       <select id="runtime" style="max-width:220px">
-        <option value="12">12 Monate (1 Jahr)</option>
-        <option value="24">24 Monate (2 Jahre)</option>
-        <option value="36">36 Monate (3 Jahre)</option>
-        <option value="48">48 Monate (4 Jahre)</option>
-        <option value="60" selected>60 Monate (5 Jahre, Standard)</option>
-        <option value="saison">Saisonmiete – zahlen nur in der Saison</option>
-        <option value="flat">Flatrate – ohne Laufzeit, jederzeit kündbar</option>
+        <option value="24" selected>24 Monate (2 Jahre)</option>
       </select>
       <span></span>
     </div>
@@ -412,6 +406,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
     <div><label for="aSaisonM">Saisonmiete: Zahlmonate je Jahr</label><input type="number" id="aSaisonM" min="1" max="12" step="1"></div>
+    <div><label for="aSaisonMin">Saisonmiete: Mindestlaufzeit (Saisonen)</label><input type="number" id="aSaisonMin" min="1" max="5" step="1"></div>
     <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
     <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
     <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
@@ -424,6 +419,12 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aMindest">Mindestrate € / Monat (netto)</label><input type="number" id="aMindest" min="0" step="1"></div>
     <div><label for="aMontModus">Lieferung & Montage</label><select id="aMontModus"><option value="rate">in die Rate eingerechnet</option><option value="einmalig">einmalig, mit der 1. Rate</option></select></div>
   </div>
+  <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Angebotene Laufzeiten</h3>
+  <div id="aLzBox" style="display:flex;flex-wrap:wrap;gap:8px 18px"></div>
+  <div class="grid g3" style="margin-top:10px">
+    <div><label for="aLzStd">Vorauswahl im Rechner</label><select id="aLzStd"></select></div>
+  </div>
+  <p class="hint" style="margin-top:6px">Nur die angehakten Laufzeiten erscheinen in der Auswahl, in der Varianten-Tabelle und im Kunden-PDF. Empfehlung lt. Wirtschaftlichkeitsprüfung: 24 und 36 Monate. 48/60 Monate erst mit höherem Zuschlag wieder aktivieren.</p>
   <div style="margin-top:12px"><label style="font-size:13px;color:var(--grey)">Restwert am Laufzeitende in % des Gerätepreises</label>
     <div style="display:grid;grid-template-columns:repeat(5,minmax(70px,1fr));gap:10px;margin-top:6px">
       <div><label for="aRw12" style="font-size:12px">12 Mon.</label><input type="number" id="aRw12" min="0" max="90" step="1"></div>
@@ -438,7 +439,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
 
-  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: Mietdauer + 3 Jahre (der Vertrag verlängert sich danach auf unbestimmte Zeit). Flatrate: 3 Jahresentgelte. Saisonmiete: 5 Saisonen (konservativ – mit dem Steuerberater zu bestätigen). Bemessung bis 150 € ist gebührenfrei.<br>
+  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: Mietdauer + 3 Jahre (der Vertrag verlängert sich danach auf unbestimmte Zeit). Flatrate: 3 Jahresentgelte. Saisonmiete: Mindestsaisonen + 3 Jahre unbestimmte Dauer, je Zahlmonate (bei 2 Mindestsaisonen = 5 Saisonen; mit dem Steuerberater zu bestätigen). Bemessung bis 150 € ist gebührenfrei.<br>
   <b>Pflicht der Stölner:</b> Gebühr selbst berechnen und bis zum <b>15. des zweitfolgenden Monats</b> nach Unterzeichnung über FinanzOnline an das Finanzamt Österreich – Dienststelle Sonderzuständigkeiten entrichten (auch wenn der Mieter sie trägt). Den <b>Selbstberechnungsvermerk</b> im Mietvertrag auf jeder Ausfertigung mit Datum ausfüllen und unterschreiben. Satz auf 0 setzen, um die Position überall auszublenden.</p>
 </details>
 
@@ -600,7 +601,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.10.0';
 const APP_STAND = '19.11.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -675,6 +676,8 @@ const FACTORY = {
      zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
      Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
   saisonMonate: 8, zuschlagSaison: 0,
+  /* Mindestlaufzeit Saisonmiete in Saisonen (ordentliche Kündigung frühestens zum Ende dieser Saison) */
+  saisonMin: 2,
   /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG) – Grundlage: USP-Merkblatt BMF, Stand 1.1.2026.
      gebuehrSatz: Prozent der Bemessungsgrundlage (1 %; 0 = Position wird nirgends ausgewiesen)
      gebuehrTraeger: 'mieter' = einmalig zusaetzlich zur Miete · 'miete' = in die Monatsrate eingerechnet
@@ -690,6 +693,9 @@ const FACTORY = {
        (Betrag je Rubrik: kategorien[].montage)
      mindestrate: Untergrenze der Monatsrate in € netto */
   zins: 0, restwert: {12:0, 24:0, 36:0, 48:0, 60:0}, montageModus: 'rate', mindestrate: 0,
+  /* Angebotene Laufzeiten (Auswahl im Rechner, Varianten-Tabelle, PDF) und Vorauswahl.
+     Wirtschaftlichkeitsprüfung 19.11.2026: 24/36 Monate tragen bei 15 % Zuschlag, 48/60 nicht. */
+  laufzeiten: ['24','36','saison','flat'], laufzeitStandard: '24',
   zuschlag: 15, zuschlagFlat: 30, kwh: 0, strom: 0.25,
   agbUrl: 'https://www.stoelner.at/agb',
   leadBonus: 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort',
@@ -710,6 +716,20 @@ let admin = false;
 let mode = 'direkt';
 const sel = $('model');
 
+const LZ_ALLE = [
+  {v:'12', t:'12 Monate (1 Jahr)'}, {v:'24', t:'24 Monate (2 Jahre)'}, {v:'36', t:'36 Monate (3 Jahre)'},
+  {v:'48', t:'48 Monate (4 Jahre)'}, {v:'60', t:'60 Monate (5 Jahre)'},
+  {v:'saison', t:'Saisonmiete – zahlen nur in der Saison'}, {v:'flat', t:'Flatrate – ohne Laufzeit, jederzeit kündbar'}];
+function saisonMinN(){ return Math.min(5, Math.max(1, Math.round(+CONFIG.saisonMin || 2))); }
+function lzAktiv(){ const a = (CONFIG.laufzeiten || []).map(String).filter(v => LZ_ALLE.some(x => x.v === v)); return a.length ? a : LZ_ALLE.map(x => x.v); }
+function lzStandard(){ const a = lzAktiv(); return a.indexOf(String(CONFIG.laufzeitStandard)) >= 0 ? String(CONFIG.laufzeitStandard) : a[0]; }
+/* Laufzeit-Auswahl aus der Konfiguration aufbauen; aktuelle Wahl bleibt, wenn sie noch angeboten wird */
+function buildRuntime(){
+  const r = $('runtime'), cur = r.value, a = lzAktiv();
+  r.innerHTML = LZ_ALLE.filter(x => a.indexOf(x.v) >= 0).map(x => '<option value="' + x.v + '">' + x.t + (x.v === lzStandard() ? ' · Empfehlung' : '') + '</option>').join('');
+  r.value = a.indexOf(cur) >= 0 ? cur : lzStandard();
+}
+
 function mergeConfig(base, over){
   const out = clone(base);
   if (!over || typeof over !== 'object') return out;
@@ -718,9 +738,11 @@ function mergeConfig(base, over){
   if (Array.isArray(over.water) && over.water.length) out.water = clone(over.water);
   if (Array.isArray(over.schutzStaffel) && over.schutzStaffel.every(s => typeof s.bis === 'number' && typeof s.preis === 'number')) out.schutzStaffel = clone(over.schutzStaffel);
   if (over.iqMeter) ['aktion','liste'].forEach(k => { if (typeof over.iqMeter[k] === 'number') out.iqMeter[k] = over.iqMeter[k]; });
-  ['zuschlag','zuschlagFlat','saisonMonate','zuschlagSaison','gebuehrSatz','gebuehrJahre','ust','gebuehrFreigrenze','zins','mindestrate','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
+  ['zuschlag','zuschlagFlat','saisonMonate','saisonMin','zuschlagSaison','gebuehrSatz','gebuehrJahre','ust','gebuehrFreigrenze','zins','mindestrate','kwh','strom'].forEach(k => { if (typeof over[k] === 'number') out[k] = over[k]; });
   if (over.restwert && typeof over.restwert === 'object') [12,24,36,48,60].forEach(L => { if (typeof over.restwert[L] === 'number') out.restwert[L] = over.restwert[L]; });
   ['email','pin','aktionsHinweis','agbUrl','leadBonus','gebuehrTraeger','montageModus'].forEach(k => { if (typeof over[k] === 'string') out[k] = over[k]; });
+  if (Array.isArray(over.laufzeiten)){ const lz = over.laufzeiten.map(String).filter(v => LZ_ALLE.some(x => x.v === v)); if (lz.length) out.laufzeiten = lz; }
+  if (typeof over.laufzeitStandard === 'string' && LZ_ALLE.some(x => x.v === over.laufzeitStandard)) out.laufzeitStandard = over.laufzeitStandard;
   return out;
 }
 
@@ -897,14 +919,14 @@ function compute(c){
      - Laufzeitmiete: bestimmte Dauer, danach Verlaengerung auf unbestimmte Zeit
        → vereinbarte Mietdauer + 3 Jahre (gebuehrJahre)
      - Flatrate: unbestimmte Dauer → 3 Jahresentgelte
-     - Saisonmiete: 5 Saisonen × Zahlmonate (konservativ; steuerlich zu bestaetigen)
+     - Saisonmiete: (Mindestsaisonen + gebuehrJahre) × Zahlmonate – bestimmte Dauer + unbestimmte Dauer (steuerlich zu bestaetigen)
      Bemessung bis zur Freigrenze (150 €) → keine Gebuehr.
      Traeger 'miete': die Gebuehr ist Teil der Gesamtkosten, die Rate deckt sie mit
      (rate = basisRate / (1 - Anteil), weil die Gebuehr selbst von der Rate abhaengt). */
   const gSatz = (c.gebuehrSatz || 0)/100;
   const ustF = 1 + (c.ust || 0)/100;
   const unbestM = 12 * (c.gebuehrJahre || 3);
-  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * 5 : c.L + unbestM));
+  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * (saisonMinN() + (CONFIG.gebuehrJahre || 3)) : c.L + unbestM));
   const inRate = c.gebuehrTraeger === 'miete' && gSatz > 0;
   const nenner = 1 - gSatz * ustF * gebMonate * (1 + c.zuschlag) * sf / c.L;
   const rateKalk = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
@@ -922,7 +944,7 @@ function compute(c){
 /* Nachvollziehbare Herleitung der Gebuehr – fuer Fusszeile, Mietvertrag und Kalkulations-PDF */
 function gebHerleitung(c, r){
   const monate = c.flat ? r.gebUnbestM + ' Monate (unbestimmte Dauer, gesetzlich ' + (r.gebUnbestM/12) + ' Jahresentgelte)'
-    : c.saison ? r.gebMonate + ' Zahlmonate (5 Saisonen à ' + c.saisonMonate + ' Monate)'
+    : c.saison ? r.gebMonate + ' Zahlmonate (' + saisonMinN() + ' Mindestsaisonen + ' + (CONFIG.gebuehrJahre || 3) + ' Jahre unbestimmte Dauer, je ' + c.saisonMonate + ' Monate)'
     : r.gebMonate + ' Monate (' + c.L + ' Monate Mietdauer + ' + r.gebUnbestM + ' Monate für die anschließende unbestimmte Dauer)';
   return (c.gebuehrSatz).toLocaleString('de-AT') + ' % von ' + eur2.format(r.gebBemessung) +
     ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate + (r.montEinmalig > 0 ? ' + Lieferung & Montage ' + eur2.format(r.montEinmalig * (1 + c.ust/100)) + ' inkl. USt' : '');
@@ -949,7 +971,7 @@ function buildMail(c, r){
     'Modell: ' + c.name,
     (c.hatWasser ? 'Wasseraufbereitung: ' + c.waterName + ' (Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ')' : 'Verbrauch laut Kategorie ' + c.katName),
     'Betrieb: ' + c.days + ' Tage/Woche, ' + c.wg + ' ' + c.plural + '/Tag' + (c.hatWasser ? ', ' + c.dh + ' °dH' : ''),
-    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : c.saison ? 'Mietmodell: Saisonmiete – ' + c.saisonMonate + ' Zahlmonate je Jahr, 5 Saisonen' : 'Laufzeit: ' + c.L + ' Monate'),
+    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : c.saison ? 'Mietmodell: Saisonmiete – ' + c.saisonMonate + ' Zahlmonate je Jahr, Mindestlaufzeit ' + saisonMinN() + ' Saisonen' : 'Laufzeit: ' + c.L + ' Monate'),
     'Kalkulierte Mietrate: ' + eur2.format(r.rate) + ' / Monat','',
     'Kalkulations-Link: ' + shareUrl(c),'','Mit freundlichen Grüßen'];
   $('btnMail').href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Angebotsanfrage Mietkalkulator: ' + c.name) +
@@ -1001,7 +1023,7 @@ function calc(){
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mieteSub').textContent = (r.montEinmalig > 0 ? 'Kein Gerätekauf' : '0 € Investition') + ' · SEPA-Einzug · ' +
-    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · 5 Saisonen' : c.L + ' Monate') +
+    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · mind. ' + saisonMinN() + ' Saisonen' : c.L + ' Monate') +
     (((r.gebuehr > 0 && !r.gebInRate) || r.montEinmalig > 0) ? ' · 1. Einzug ' + eur2.format(r.rate + (r.gebInRate ? 0 : r.gebuehr) + r.montEinmalig) + ' (Rate' + (r.montEinmalig > 0 ? ' + Montage' : '') + ((r.gebuehr > 0 && !r.gebInRate) ? ' + Gebühr' : '') + ')' : '') +
     (r.minAktiv ? ' · Mindestrate' : '');
   $('mMontRow').hidden = !(r.montEinmalig > 0);
@@ -1018,7 +1040,7 @@ function calc(){
   $('endNote').textContent = c.flat
     ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
     : c.saison
-    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Nach der letzten Saison: Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
+    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Mindestlaufzeit ' + saisonMinN() + ' Saisonen, danach jeweils zum Saisonende kündbar; dann Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
     : 'Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.';
 
   $('kInvest').textContent = eur.format(r.invest);
@@ -1064,10 +1086,11 @@ function calc(){
 
   /* Laufzeit-Varianten 12–60 Monate (wie Beispielrechnung „Laufzeit-Varianten") */
   const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
-  const vars = [12,24,36,48,60].map(L => ({L, flat:false, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
+  const lzA = lzAktiv();
+  const vars = [12,24,36,48,60].filter(L => lzA.indexOf(String(L)) >= 0).map(L => ({L, flat:false, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
   const saisZ = (CONFIG.zuschlag + (CONFIG.zuschlagSaison || 0))/100, sM = saisonM();
-  vars.push({L:60, saison:true, flat:false, r: compute(Object.assign({}, c, {L:60, zuschlag: saisZ, saisonFaktor: 12/sM}))});
-  vars.push({L:60, flat:true, saison:false, r: compute(Object.assign({}, c, {L:60, zuschlag: flatZ, saisonFaktor: 1}))});
+  if (lzA.indexOf('saison') >= 0) vars.push({L:60, saison:true, flat:false, r: compute(Object.assign({}, c, {L:60, zuschlag: saisZ, saisonFaktor: 12/sM}))});
+  if (lzA.indexOf('flat') >= 0) vars.push({L:60, flat:true, saison:false, r: compute(Object.assign({}, c, {L:60, zuschlag: flatZ, saisonFaktor: 1}))});
   const isCur = v => !!v.flat === !!c.flat && !!v.saison === !!c.saison && (v.flat || v.saison || v.L === c.L);
   const vcell = (f, cls) => vars.map(v => '<td class="' + (isCur(v) ? 'cur ' : '') + (cls||'') + '">' + f(v) + '</td>').join('');
   $('varTable').innerHTML =
@@ -1079,8 +1102,9 @@ function calc(){
     '<tr><td>Kauf je ' + c.einheit + '</td>' + vcell(v => (v.flat || v.saison) ? '–' : ct(v.r.total / v.r.wgTotal + v.r.neben)) + '</tr>' +
     '</tbody>';
   $('varTable').querySelectorAll('button[data-l]').forEach(b => b.onclick = () => { $('runtime').value = b.dataset.l; calc(); });
-  $('varNote').textContent = 'Spalte anklicken, um Laufzeit, Saisonmiete oder Flatrate zu übernehmen. Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen. Je ' + c.einheit + ' inkl. Nebenkosten' +
-    '. Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet). Bei Vertragsende jeweils: Rücknahme durch Stölner. Ein Kauf des Geräts ist möglich, der Kaufpreis wird unabhängig von der Miete vereinbart.';
+  $('varNote').textContent = 'Spalte anklicken, um die Variante zu übernehmen. Je ' + c.einheit + ' inkl. Nebenkosten.' +
+    (lzA.indexOf('saison') >= 0 ? ' Saisonmiete: Zahlung nur in ' + sM + ' Monaten je Jahr, gerechnet über 5 Saisonen.' : '') +
+    (lzA.indexOf('flat') >= 0 ? ' Flatrate: ohne Mindestlaufzeit, jederzeit kündbar (je ' + c.einheit + ' auf 5-Jahres-Basis gerechnet).' : '') + ' Bei Vertragsende jeweils: Rücknahme durch Stölner. Ein Kauf des Geräts ist möglich, der Kaufpreis wird unabhängig von der Miete vereinbart.';
 
   drawChart(c, r);
   buildMail(c, r);
@@ -1225,6 +1249,7 @@ function renderAdmin(){
   $('aZuschlag').value = CONFIG.zuschlag;
   $('aZuschlagFlat').value = typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag;
   $('aSaisonM').value = saisonM();
+  $('aSaisonMin').value = saisonMinN();
   $('aZuschlagSaison').value = CONFIG.zuschlagSaison || 0;
   $('aGebSatz').value = typeof CONFIG.gebuehrSatz === 'number' ? CONFIG.gebuehrSatz : 0;
   $('aGebTraeger').value = CONFIG.gebuehrTraeger === 'miete' ? 'miete' : 'mieter';
@@ -1233,6 +1258,16 @@ function renderAdmin(){
   $('aZins').value = +CONFIG.zins || 0; $('aMindest').value = +CONFIG.mindestrate || 0;
   $('aMontModus').value = CONFIG.montageModus === 'einmalig' ? 'einmalig' : 'rate';
   [12,24,36,48,60].forEach(L => { $('aRw' + L).value = +(CONFIG.restwert || {})[L] || 0; });
+  const lzA = lzAktiv();
+  $('aLzBox').innerHTML = LZ_ALLE.map(x => '<label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer"><input type="checkbox" data-lz="' + x.v + '"' + (lzA.indexOf(x.v) >= 0 ? ' checked' : '') + ' style="width:18px;height:18px">' + x.t.split(' – ')[0].replace(/ \(.*\)/, '') + '</label>').join('');
+  $('aLzBox').querySelectorAll('input[data-lz]').forEach(cb => cb.onchange = () => {
+    const neu = [...$('aLzBox').querySelectorAll('input[data-lz]:checked')].map(x => x.dataset.lz);
+    if (!neu.length){ cb.checked = true; alert('Mindestens eine Laufzeit muss angeboten werden.'); return; }
+    CONFIG.laufzeiten = neu; saveLocal(); buildRuntime(); renderAdmin(); calc();
+  });
+  $('aLzStd').innerHTML = LZ_ALLE.filter(x => lzA.indexOf(x.v) >= 0).map(x => '<option value="' + x.v + '">' + x.t.split(' – ')[0] + '</option>').join('');
+  $('aLzStd').value = lzStandard();
+  $('aLzStd').onchange = () => { CONFIG.laufzeitStandard = $('aLzStd').value; $('runtime').value = CONFIG.laufzeitStandard; saveLocal(); buildRuntime(); calc(); };
   const stb = document.querySelector('#schutzTable tbody');
   stb.innerHTML = '';
   CONFIG.schutzStaffel.forEach((s, i) => {
@@ -1262,7 +1297,7 @@ function renderAdmin(){
 
 function bindAdminGlobals(){
   const map = {aIqA:['iqMeter','aktion'], aIqL:['iqMeter','liste'],
-               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aZuschlagSaison:['zuschlagSaison'],
+               aZuschlag:['zuschlag'], aZuschlagFlat:['zuschlagFlat'], aSaisonM:['saisonMonate'], aSaisonMin:['saisonMin'], aZuschlagSaison:['zuschlagSaison'],
                aGebSatz:['gebuehrSatz'], aGebTraeger:['gebuehrTraeger'], aGebJahre:['gebuehrJahre'], aUst:['ust'], aZins:['zins'], aMindest:['mindestrate'], aMontModus:['montageModus'],
                aRw12:['restwert','12'], aRw24:['restwert','24'], aRw36:['restwert','36'], aRw48:['restwert','48'], aRw60:['restwert','60'], aKwh:['kwh'], aStrom:['strom'], aEmail:['email'], aPin:['pin'], aAktion:['aktionsHinweis'], aAgb:['agbUrl'], aLeadBonus:['leadBonus']};
   Object.entries(map).forEach(([id, path]) => {
@@ -1695,7 +1730,7 @@ function applyHash(){
   if (p.has('w')) $('wg').value = get('w');
   if (p.has('h')) $('dh').value = get('h');
   if (p.has('wp')) $('wp').value = get('wp');
-  if (p.has('L')) $('runtime').value = p.get('L');
+  if (p.has('L') && lzAktiv().indexOf(p.get('L')) >= 0) $('runtime').value = p.get('L');
   if (p.get('md') === 'schaetz') mode = 'schaetz';
 }
 
@@ -1802,7 +1837,7 @@ function vertragHtml(c, r, k){
   })())+
   rows('Aufstellungsort', standort)+'</table>'+
   '<h2><span class="nr">3.</span>Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber 5 Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete, Mindestlaufzeit '+saisonMinN()+' Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', '<span class="betrag">'+netto+'</span> zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   (r.montEinmalig > 0 ? rows('Lieferung und Montage', eur2.format(r.montEinmalig)+' zzgl. gesetzlicher USt \u2013 einmalig; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
@@ -1815,7 +1850,7 @@ function vertragHtml(c, r, k){
   '<p>'+(c.flat
     ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden (Flatrate ohne Mindestlaufzeit).'
     : c.saison
-    ? 'Der Vertrag ist auf f\u00fcnf Saisonen abgeschlossen. Er kann von beiden Seiten zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
+    ? 'Die Mindestlaufzeit betr\u00e4gt '+saisonMinN()+' Saisonen. Eine ordentliche K\u00fcndigung ist fr\u00fchestens zum Ende der '+saisonMinN()+'. Saison m\u00f6glich. Danach l\u00e4uft der Vertrag auf unbestimmte Zeit weiter und kann von beiden Seiten jeweils zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
     : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
   ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
   (r.gebuehr > 0 ? '<p style="page-break-inside:avoid;break-inside:avoid">Die Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge nach \u00a7 33 TP 5 Geb\u00fchrengesetz wird von der Vermieterin selbst berechnet und an das Finanzamt entrichtet. '+
@@ -1854,7 +1889,8 @@ function leadReportHtml(c, r, lead){
   const headerImg = document.querySelector('header img');
   const logoSrc = headerImg ? headerImg.src : '';
   const flatZ = (typeof CONFIG.zuschlagFlat === 'number' ? CONFIG.zuschlagFlat : CONFIG.zuschlag)/100;
-  const vars = [12,24,36,48,60].map(L => ({L, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
+  const lzA = lzAktiv(), mitFlat = lzA.indexOf('flat') >= 0;
+  const vars = [12,24,36,48,60].filter(L => lzA.indexOf(String(L)) >= 0).map(L => ({L, r: compute(Object.assign({}, c, {L, zuschlag: CONFIG.zuschlag/100}))}));
   const flat = compute(Object.assign({}, c, {L:60, zuschlag: flatZ}));
   const rows = (t,v) => '<tr><td>'+t+'</td><td>'+v+'</td></tr>';
   return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">'+
@@ -1879,7 +1915,7 @@ function leadReportHtml(c, r, lead){
   '<div class="kopf"><div><h1>Deine Mietkalkulation</h1><div style="font-size:12px;color:#555">'+(lead.firma ? lead.firma+' · ' : '')+(lead.name ? lead.name+' · ' : '')+'erstellt am '+heute+'</div></div>'+
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="Stölner" style="height:38px;margin-bottom:8px">' : '<b>Stölner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstraße 9, A-3100 St. Pölten</div></div>'+
   '<p class="rate">'+eur2.format(r.rate)+' / Monat</p>'+
-  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.saison ? 'Saisonmiete – '+c.saisonMonate+' Zahlmonate je Jahr, Winterpause ohne Rate' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
+  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.saison ? 'Saisonmiete – '+c.saisonMonate+' Zahlmonate je Jahr, Winterpause ohne Rate, Mindestlaufzeit '+saisonMinN()+' Saisonen' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
   '<h2>Deine Konfiguration</h2>'+
   '<table>'+rows('Gerät', c.name)+
   (c.hatWasser ? rows('Wasseraufbereitung', c.waterName+(c.iq > 0 ? ' + iQ Meter' : '')) : '')+
@@ -1890,10 +1926,10 @@ function leadReportHtml(c, r, lead){
   (r.gebuehr > 0 ? rows('Rechtsgeschäftsgebühr', eur2.format(r.gebuehr)+(r.gebInRate ? ' · im Mietentgelt enthalten' : ' · einmalig, gesondert ausgewiesen, Einzug mit der 1. Rate')) : '')+
   rows('Nach Vertragsende', 'Rücknahme kostenlos · ein Kauf ist möglich, der Preis wird gesondert vereinbart')+'</table>'+
   '<h2>Alle Laufzeiten im Überblick</h2>'+
-  '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+'<th>Flatrate</th></tr>'+
-  '<tr><td>Miete je Monat</td>'+vars.map(v => '<td><b>'+eur2.format(v.r.rate)+'</b></td>').join('')+'<td><b>'+eur2.format(flat.rate)+'</b></td></tr>'+
-  '<tr><td>Kauf gesamt (Vergleich)</td>'+vars.map(v => '<td>'+eur.format(v.r.total)+'</td>').join('')+'<td>–</td></tr>'+
-  '<tr><td>Miete je '+c.einheit+'</td>'+vars.map(v => '<td>'+ct(v.r.rate*v.L/v.r.wgTotal + v.r.neben)+'</td>').join('')+'<td>'+ct(flat.rate*60/flat.wgTotal + flat.neben)+'</td></tr></table>'+
+  '<table><tr><th></th>'+vars.map(v => '<th>'+v.L+' Monate</th>').join('')+(mitFlat ? '<th>Flatrate</th>' : '')+'</tr>'+
+  '<tr><td>Miete je Monat</td>'+vars.map(v => '<td><b>'+eur2.format(v.r.rate)+'</b></td>').join('')+(mitFlat ? '<td><b>'+eur2.format(flat.rate)+'</b></td>' : '')+'</tr>'+
+  '<tr><td>Kauf gesamt (Vergleich)</td>'+vars.map(v => '<td>'+eur.format(v.r.total)+'</td>').join('')+(mitFlat ? '<td>–</td>' : '')+'</tr>'+
+  '<tr><td>Miete je '+c.einheit+'</td>'+vars.map(v => '<td>'+ct(v.r.rate*v.L/v.r.wgTotal + v.r.neben)+'</td>').join('')+(mitFlat ? '<td>'+ct(flat.rate*60/flat.wgTotal + flat.neben)+'</td>' : '')+'</tr></table>'+
   '<div class="gutschein"><b>Dein Gutschein: '+(CONFIG.leadBonus || 'Kostenlose Wasseranalyse und Bedarfscheck vor Ort')+'</b><br>'+
   'Wir kommen unverbindlich vorbei, messen deine Wasserwerte und bestätigen dir deine Rate verbindlich. Einfach auf die E-Mail antworten oder anrufen – wir melden uns in den nächsten Tagen bei dir.</div>'+
   '<p class="hinweis">Beispielrechnung vorbehaltlich Wasseranalyse vor Ort. Es gelten die AGB der Stölner Ges.m.b.H.'+(CONFIG.agbUrl ? ' ('+CONFIG.agbUrl.replace('https://','')+')' : '')+'. Erstellt mit dem Stölner Gastrotechnik-Mietkalkulator am '+heute+'.</p>'+
@@ -1960,6 +1996,7 @@ function start(){
   $('appVersion').textContent = 'v' + APP_VERSION;
   $('appVersionFooter').textContent = 'Version ' + APP_VERSION + ' · Stand ' + APP_STAND;
   $('agbLink').href = CONFIG.agbUrl || '#';
+  buildRuntime();
   buildKatSelect();
   buildSelect();
   buildWaterSelect();

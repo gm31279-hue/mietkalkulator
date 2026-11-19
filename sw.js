@@ -1,5 +1,5 @@
 /* Stölner Mietkalkulator – Service Worker: App-Shell offline verfügbar, Updates online automatisch */
-const CACHE = 'mietkalkulator-v2';
+const CACHE = 'mietkalkulator-v3';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
