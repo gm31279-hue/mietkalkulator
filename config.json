@@ -311,7 +311,7 @@
   },
   "aktionsHinweis": "Aktionspreise: Osmose bis 31.10.2026, iQ Meter bis 31.12.2026.",
   "saisonMonate": 8,
-  "zuschlagSaison": 10,
+  "zuschlagSaison": 30,
   "gebuehrSatz": 1,
   "gebuehrTraeger": "mieter",
   "gebuehrJahre": 3,
@@ -334,5 +334,6 @@
   "agbUrl": "https://www.stoelner.at/agb",
   "leadBonus": "Kostenlose Wasseranalyse und Bedarfscheck vor Ort",
   "email": "office@stoelner.at",
-  "pin": "720"
+  "pin": "720",
+  "saisonMin": 2
 }
