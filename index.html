@@ -499,7 +499,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <p class="big" id="kInvest">–</p>
         <p class="sub">Investition am Tag 1</p>
         <table>
-          <tr><td class="inc">Verbrauch + Filter, <span class="lz">5 Jahre</span></td><td id="kLauf">–</td></tr>
+          <tr id="kLaufRow"><td class="inc"><span id="kLaufLabel">Laufende Kosten</span>, <span class="lz">5 Jahre</span></td><td id="kLauf">–</td></tr>
           <tr><td class="inc">Gesamt <span class="lz">5 Jahre</span></td><td id="kTotal">–</td></tr>
           <tr><td class="inc" id="kWgLabel">je Spülgang (inkl. Nebenkosten)</td><td id="kWg">–</td></tr>
         </table>
@@ -601,7 +601,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 const APP_STAND = '19.11.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1044,6 +1044,13 @@ function calc(){
     : 'Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.';
 
   $('kInvest').textContent = eur.format(r.invest);
+  /* Bezeichnung nach dem, was tatsächlich drinsteckt (Eis/Softeis: kein Filter, kein Verbrauchsmaterial) */
+  const laufTeile = [];
+  if (r.kartN * c.kart > 0) laufTeile.push(c.osmose ? 'Membrantausch' : 'Filter');
+  if (r.postenKosten > 0) laufTeile.push('Verbrauch');
+  if (r.wartungK > 0) laufTeile.push('Wartung');
+  $('kLaufLabel').textContent = laufTeile.length ? laufTeile.join(' + ') : 'Laufende Kosten';
+  $('kLaufRow').hidden = !(r.lauf > 0);
   $('kLauf').textContent = eur.format(r.lauf);
   $('kTotal').innerHTML = '<b>' + eur.format(r.total) + '</b>';
   $('kWg').textContent = ct(r.total/r.wgTotal + r.neben);
