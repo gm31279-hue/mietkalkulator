@@ -406,11 +406,11 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div><label for="aZuschlag">Zuschlag Miete (%)</label><input type="number" id="aZuschlag" min="0" max="60" step="0.5"></div>
     <div><label for="aZuschlagFlat">Zuschlag Flatrate (%)</label><input type="number" id="aZuschlagFlat" min="0" max="60" step="0.5"></div>
     <div><label for="aSaisonM">Saisonmiete: Zahlmonate je Jahr</label><input type="number" id="aSaisonM" min="1" max="12" step="1"></div>
-    <div><label for="aSaisonMin">Saisonmiete: Mindestlaufzeit (Saisonen)</label><input type="number" id="aSaisonMin" min="1" max="5" step="1"></div>
+    <div><label for="aSaisonMin">Saisonmiete: Laufzeit (Saisonen)</label><input type="number" id="aSaisonMin" min="1" max="5" step="1"></div>
     <div><label for="aZuschlagSaison">Zuschlag Saisonmiete (%-Punkte zusätzlich)</label><input type="number" id="aZuschlagSaison" min="0" max="60" step="0.5"></div>
     <div><label for="aGebSatz">Rechtsgeschäftsgebühr (% der Bemessung)</label><input type="number" id="aGebSatz" min="0" max="5" step="0.1"></div>
     <div><label for="aGebTraeger">Gebühr trägt</label><select id="aGebTraeger"><option value="mieter">Mieter · separat, Einzug mit der 1. Rate</option><option value="miete">Stölner · in der Rate enthalten</option></select></div>
-    <div><label for="aGebJahre">Bemessung unbestimmte Dauer (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
+    <div><label for="aGebJahre">Bemessung Flatrate / unbestimmte Dauer (Jahresentgelte)</label><input type="number" id="aGebJahre" min="1" max="18" step="1"></div>
     <div><label for="aUst">USt-Satz in der Bemessung (%)</label><input type="number" id="aUst" min="0" max="30" step="1"></div>
   </div>
   <h3 style="font-size:15px;font-weight:600;margin:22px 0 10px">Finanzierung & Pauschalen</h3>
@@ -439,7 +439,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   <p class="hint" style="margin-top:8px">Saisonmiete: dieselbe Jahressumme wie die 60-Monats-Miete, nur auf die Zahlmonate verteilt. Der Zuschlag Saisonmiete ist ein <b>zusätzlicher</b> Aufschlag auf den Standardzuschlag und deckt Winterstillstand, Rücknahme, Einlagerung und Wiederinbetriebnahme ab. Startwert 0 – kaufmännisch festzulegen.</p>
 
-  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: Mietdauer + 3 Jahre (der Vertrag verlängert sich danach auf unbestimmte Zeit). Flatrate: 3 Jahresentgelte. Saisonmiete: Mindestsaisonen + 3 Jahre unbestimmte Dauer, je Zahlmonate (bei 2 Mindestsaisonen = 5 Saisonen; mit dem Steuerberater zu bestätigen). Bemessung bis 150 € ist gebührenfrei.<br>
+  <p class="hint" style="margin-top:8px"><b>Rechtsgeschäftsgebühr (§ 33 TP 5 GebG, lt. USP-Merkblatt Stand 1.1.2026):</b> 1 % der Bemessungsgrundlage = Mietentgelt <b>inkl. USt</b> × Dauer. Laufzeitmiete: vereinbarte Mietdauer (Vertrag endet ohne Verlängerung). Flatrate: 3 Jahresentgelte (unbestimmte Dauer). Saisonmiete: Saisonen × Zahlmonate (endet ohne Verlängerung). Bemessung bis 150 € ist gebührenfrei.<br>
   <b>Pflicht der Stölner:</b> Gebühr selbst berechnen und bis zum <b>15. des zweitfolgenden Monats</b> nach Unterzeichnung über FinanzOnline an das Finanzamt Österreich – Dienststelle Sonderzuständigkeiten entrichten (auch wenn der Mieter sie trägt). Den <b>Selbstberechnungsvermerk</b> im Mietvertrag auf jeder Ausfertigung mit Datum ausfüllen und unterschreiben. Satz auf 0 setzen, um die Position überall auszublenden.</p>
 </details>
 
@@ -601,7 +601,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.10.2';
+const APP_VERSION = '1.11.0';
 const APP_STAND = '25.11.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -676,7 +676,7 @@ const FACTORY = {
      zuschlagSaison = zusätzlicher Aufschlag auf die Standardmiete für Winterstillstand, Rücknahme und Einlagerung.
      Startwert 0 = keine Zusatzmarge; kaufmännisch zu prüfen (siehe Hinweis im Admin). */
   saisonMonate: 8, zuschlagSaison: 30,
-  /* Mindestlaufzeit Saisonmiete in Saisonen (ordentliche Kündigung frühestens zum Ende dieser Saison) */
+  /* Laufzeit Saisonmiete in Saisonen – Vertrag endet danach ohne Verlängerung */
   saisonMin: 2,
   /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG) – Grundlage: USP-Merkblatt BMF, Stand 1.1.2026.
      gebuehrSatz: Prozent der Bemessungsgrundlage (1 %; 0 = Position wird nirgends ausgewiesen)
@@ -916,17 +916,16 @@ function compute(c){
   /* Gebuehr fuer Bestandvertraege (§ 33 TP 5 GebG, USP-Merkblatt Stand 1.1.2026):
      Bemessung = Monatsentgelt INKL. USt (Vertrag vereinbart "zzgl. USt") × Monate.
      Monate je Vertragsart – richtet sich nach Punkt 3/4 des Mietvertrags:
-     - Laufzeitmiete: bestimmte Dauer, danach Verlaengerung auf unbestimmte Zeit
-       → vereinbarte Mietdauer + 3 Jahre (gebuehrJahre)
+     - Laufzeitmiete: bestimmte Dauer, endet ohne Verlaengerung (seit 25.11.2026) → vereinbarte Mietdauer
      - Flatrate: unbestimmte Dauer → 3 Jahresentgelte
-     - Saisonmiete: (Mindestsaisonen + gebuehrJahre) × Zahlmonate – bestimmte Dauer + unbestimmte Dauer (steuerlich zu bestaetigen)
+     - Saisonmiete: Saisonen × Zahlmonate – bestimmte Dauer, endet ohne Verlaengerung
      Bemessung bis zur Freigrenze (150 €) → keine Gebuehr.
      Traeger 'miete': die Gebuehr ist Teil der Gesamtkosten, die Rate deckt sie mit
      (rate = basisRate / (1 - Anteil), weil die Gebuehr selbst von der Rate abhaengt). */
   const gSatz = (c.gebuehrSatz || 0)/100;
   const ustF = 1 + (c.ust || 0)/100;
   const unbestM = 12 * (c.gebuehrJahre || 3);
-  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * (saisonMinN() + (CONFIG.gebuehrJahre || 3)) : c.L + unbestM));
+  const gebMonate = gSatz <= 0 ? 0 : (c.flat ? unbestM : (c.saison ? c.saisonMonate * saisonMinN() : c.L));
   const inRate = c.gebuehrTraeger === 'miete' && gSatz > 0;
   const nenner = 1 - gSatz * ustF * gebMonate * (1 + c.zuschlag) * sf / c.L;
   const rateKalk = (inRate && nenner > 0.5) ? basisRate / nenner : basisRate;
@@ -944,8 +943,8 @@ function compute(c){
 /* Nachvollziehbare Herleitung der Gebuehr – fuer Fusszeile, Mietvertrag und Kalkulations-PDF */
 function gebHerleitung(c, r){
   const monate = c.flat ? r.gebUnbestM + ' Monate (unbestimmte Dauer, gesetzlich ' + (r.gebUnbestM/12) + ' Jahresentgelte)'
-    : c.saison ? r.gebMonate + ' Zahlmonate (' + saisonMinN() + ' Mindestsaisonen + ' + (CONFIG.gebuehrJahre || 3) + ' Jahre unbestimmte Dauer, je ' + c.saisonMonate + ' Monate)'
-    : r.gebMonate + ' Monate (' + c.L + ' Monate Mietdauer + ' + r.gebUnbestM + ' Monate für die anschließende unbestimmte Dauer)';
+    : c.saison ? r.gebMonate + ' Zahlmonate (' + saisonMinN() + ' Saisonen à ' + c.saisonMonate + ' Monate, bestimmte Dauer)'
+    : r.gebMonate + ' Monate (vereinbarte Mietdauer, bestimmte Dauer)';
   return (c.gebuehrSatz).toLocaleString('de-AT') + ' % von ' + eur2.format(r.gebBemessung) +
     ' – Mietentgelt inkl. ' + c.ust + ' % USt × ' + monate + (r.montEinmalig > 0 ? ' + Lieferung & Montage ' + eur2.format(r.montEinmalig * (1 + c.ust/100)) + ' inkl. USt' : '');
 }
@@ -971,7 +970,7 @@ function buildMail(c, r){
     'Modell: ' + c.name,
     (c.hatWasser ? 'Wasseraufbereitung: ' + c.waterName + ' (Preisbasis ' + (c.basis === 'liste' ? 'Liste' : 'Aktion') + ')' : 'Verbrauch laut Kategorie ' + c.katName),
     'Betrieb: ' + c.days + ' Tage/Woche, ' + c.wg + ' ' + c.plural + '/Tag' + (c.hatWasser ? ', ' + c.dh + ' °dH' : ''),
-    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : c.saison ? 'Mietmodell: Saisonmiete – ' + c.saisonMonate + ' Zahlmonate je Jahr, Mindestlaufzeit ' + saisonMinN() + ' Saisonen' : 'Laufzeit: ' + c.L + ' Monate'),
+    (c.flat ? 'Mietmodell: Flatrate – ohne Laufzeit, jederzeit kündbar' : c.saison ? 'Mietmodell: Saisonmiete – ' + c.saisonMonate + ' Zahlmonate je Jahr, Laufzeit ' + saisonMinN() + ' Saisonen' : 'Laufzeit: ' + c.L + ' Monate'),
     'Kalkulierte Mietrate: ' + eur2.format(r.rate) + ' / Monat','',
     'Kalkulations-Link: ' + shareUrl(c),'','Mit freundlichen Grüßen'];
   $('btnMail').href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent('Angebotsanfrage Mietkalkulator: ' + c.name) +
@@ -1023,7 +1022,7 @@ function calc(){
   $('wpOut').textContent = c.wp.toLocaleString('de-AT',{minimumFractionDigits:2}) + ' €';
   document.querySelectorAll('.lz').forEach(el => el.textContent = c.L === 60 ? '5 Jahre' : c.L + ' Monate');
   $('mieteSub').textContent = (r.montEinmalig > 0 ? 'Kein Gerätekauf' : '0 € Investition') + ' · SEPA-Einzug · ' +
-    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · mind. ' + saisonMinN() + ' Saisonen' : c.L + ' Monate') +
+    (c.flat ? 'jederzeit kündbar' : c.saison ? c.saisonMonate + ' Zahlmonate je Jahr · ' + saisonMinN() + ' Saisonen' : c.L + ' Monate') +
     (((r.gebuehr > 0 && !r.gebInRate) || r.montEinmalig > 0) ? ' · 1. Einzug ' + eur2.format(r.rate + (r.gebInRate ? 0 : r.gebuehr) + r.montEinmalig) + ' (Rate' + (r.montEinmalig > 0 ? ' + Montage' : '') + ((r.gebuehr > 0 && !r.gebInRate) ? ' + Gebühr' : '') + ')' : '') +
     (r.minAktiv ? ' · Mindestrate' : '');
   $('mMontRow').hidden = !(r.montEinmalig > 0);
@@ -1040,7 +1039,7 @@ function calc(){
   $('endNote').textContent = c.flat
     ? 'Flatrate ohne Mindestlaufzeit – monatlich kündbar. Bei Vertragsende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
     : c.saison
-    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Mindestlaufzeit ' + saisonMinN() + ' Saisonen, danach jeweils zum Saisonende kündbar; dann Rücknahme. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
+    ? 'Saisonmiete: Zahlung nur in ' + c.saisonMonate + ' Monaten je Jahr, in den übrigen ' + (12 - c.saisonMonate) + ' Monaten keine Rate. Das Gerät wird über den Winter von Stölner zurückgenommen, gewartet und zum Saisonstart wieder betriebsfertig übergeben. Laufzeit ' + saisonMinN() + ' Saisonen, danach endet der Vertrag automatisch; Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.'
     : 'Nach Laufzeitende: Rücknahme durch Stölner. Ein Kauf ist möglich, der Preis wird gesondert vereinbart.';
 
   $('kInvest').textContent = eur.format(r.invest);
@@ -1844,7 +1843,7 @@ function vertragHtml(c, r, k){
   })())+
   rows('Aufstellungsort', standort)+'</table>'+
   '<h2><span class="nr">3.</span>Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete, Mindestlaufzeit '+saisonMinN()+' Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber '+saisonMinN()+' Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', '<span class="betrag">'+netto+'</span> zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   (r.montEinmalig > 0 ? rows('Lieferung und Montage', eur2.format(r.montEinmalig)+' zzgl. gesetzlicher USt \u2013 einmalig; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
@@ -1857,8 +1856,8 @@ function vertragHtml(c, r, k){
   '<p>'+(c.flat
     ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden (Flatrate ohne Mindestlaufzeit).'
     : c.saison
-    ? 'Die Mindestlaufzeit betr\u00e4gt '+saisonMinN()+' Saisonen. Eine ordentliche K\u00fcndigung ist fr\u00fchestens zum Ende der '+saisonMinN()+'. Saison m\u00f6glich. Danach l\u00e4uft der Vertrag auf unbestimmte Zeit weiter und kann von beiden Seiten jeweils zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
-    : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
+    ? 'Der Vertrag ist auf '+saisonMinN()+' Saisonen abgeschlossen und endet mit Ablauf der '+saisonMinN()+'. Saison, ohne dass es einer K\u00fcndigung bedarf. Eine ordentliche K\u00fcndigung w\u00e4hrend der Vertragsdauer ist ausgeschlossen.'
+    : 'Der Vertrag ist auf '+monate+' Monate abgeschlossen und endet mit Ablauf der vereinbarten Mietdauer, ohne dass es einer K\u00fcndigung bedarf. W\u00e4hrend der Mietdauer ist die ordentliche K\u00fcndigung ausgeschlossen.')+(c.flat ? '' : ' Setzt der Mieter den Gebrauch nach Vertragsende fort, bewirkt dies keine Verl\u00e4ngerung oder Erneuerung des Vertrags; bis zur R\u00fcckgabe ist ein Ben\u00fctzungsentgelt in H\u00f6he des bisherigen Mietentgelts zu zahlen. Eine Fortsetzung bedarf einer neuen schriftlichen Vereinbarung.')+
   '</p>'+
   '<p><b>Vorzeitige Aufl\u00f6sung durch die Vermieterin.</b> Die Vermieterin ist berechtigt, den Vertrag aus wichtigem Grund mit sofortiger Wirkung schriftlich aufzul\u00f6sen. Ein wichtiger Grund liegt insbesondere vor, wenn</p>'+
   '<ol class="gruende">'+
@@ -1868,7 +1867,7 @@ function vertragHtml(c, r, k){
   '<li>der Mieter der Vermieterin trotz Aufforderung den Zugang zum Ger\u00e4t f\u00fcr Wartung, Service oder Kontrolle verweigert;</li>'+
   '<li>der Mieter den Betrieb am Aufstellungsort einstellt, verpachtet oder \u00fcbertr\u00e4gt;</li>'+
   '<li>der Mieter bei Vertragsabschluss wesentliche Angaben unrichtig gemacht hat.</li></ol>'+
-  '<p>Wird der Vertrag aus einem dieser Gr\u00fcnde aufgel\u00f6st, ist die Vermieterin berechtigt, das Ger\u00e4t unverz\u00fcglich abzuholen; der Mieter gew\u00e4hrt hierf\u00fcr Zutritt zum Aufstellungsort. Der Mieter ersetzt der Vermieterin den daraus entstehenden Schaden, insbesondere die bis zum Ende der vereinbarten '+(c.flat ? 'K\u00fcndigungsfrist' : 'Mindestlaufzeit')+' ausstehenden Mietentgelte, abz\u00fcglich der durch die vorzeitige R\u00fcckgabe ersparten Aufwendungen, sowie die Kosten der Abholung. Das Recht des Mieters zur Aufl\u00f6sung aus wichtigem Grund bleibt unber\u00fchrt.</p>'+
+  '<p>Wird der Vertrag aus einem dieser Gr\u00fcnde aufgel\u00f6st, ist die Vermieterin berechtigt, das Ger\u00e4t unverz\u00fcglich abzuholen; der Mieter gew\u00e4hrt hierf\u00fcr Zutritt zum Aufstellungsort. Der Mieter ersetzt der Vermieterin den daraus entstehenden Schaden, insbesondere die bis zum Ende der vereinbarten '+(c.flat ? 'K\u00fcndigungsfrist' : 'Mietdauer')+' ausstehenden Mietentgelte, abz\u00fcglich der durch die vorzeitige R\u00fcckgabe ersparten Aufwendungen, sowie die Kosten der Abholung. Das Recht des Mieters zur Aufl\u00f6sung aus wichtigem Grund bleibt unber\u00fchrt.</p>'+
   (r.gebuehr > 0 ? '<p style="page-break-inside:avoid;break-inside:avoid">Die Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge nach \u00a7 33 TP 5 Geb\u00fchrengesetz wird von der Vermieterin selbst berechnet und an das Finanzamt entrichtet. '+
     (r.gebInRate ? 'Sie ist im monatlichen Mietentgelt bereits ber\u00fccksichtigt.' : 'Der Mieter ersetzt der Vermieterin die Geb\u00fchr in der unter Punkt 3 ausgewiesenen H\u00f6he; der Betrag wird gemeinsam mit der ersten Monatsrate eingezogen.')+
     ' Jede Ausfertigung dieser Vertragsurkunde tr\u00e4gt den Vermerk \u00fcber die Selbstberechnung.</p>' : '')+
@@ -1931,7 +1930,7 @@ function leadReportHtml(c, r, lead){
   '<div class="kopf"><div><h1>Deine Mietkalkulation</h1><div style="font-size:12px;color:#555">'+(lead.firma ? lead.firma+' · ' : '')+(lead.name ? lead.name+' · ' : '')+'erstellt am '+heute+'</div></div>'+
   '<div class="adr">'+(logoSrc ? '<img src="'+logoSrc+'" alt="Stölner" style="height:38px;margin-bottom:8px">' : '<b>Stölner Ges.m.b.H.</b>')+'<br>Burggasse 120, A-1070 Wien<br>Herzogenburgerstraße 9, A-3100 St. Pölten</div></div>'+
   '<p class="rate">'+eur2.format(r.rate)+' / Monat</p>'+
-  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.saison ? 'Saisonmiete – '+c.saisonMonate+' Zahlmonate je Jahr, Winterpause ohne Rate, Mindestlaufzeit '+saisonMinN()+' Saisonen' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
+  '<p style="color:#555;margin-top:2px">'+(c.flat ? 'Flatrate – ohne Laufzeit, jederzeit monatlich kündbar' : c.saison ? 'Saisonmiete – '+c.saisonMonate+' Zahlmonate je Jahr, Winterpause ohne Rate, Laufzeit '+saisonMinN()+' Saisonen' : c.L+' Monate Laufzeit')+' · 0 € Investition · alles inklusive · '+ct(r.rate*c.L/r.wgTotal + r.neben)+' je '+c.einheit+'</p>'+
   '<h2>Deine Konfiguration</h2>'+
   '<table>'+rows('Gerät', c.name)+
   (c.hatWasser ? rows('Wasseraufbereitung', c.waterName+(c.iq > 0 ? ' + iQ Meter' : '')) : '')+
