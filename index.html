@@ -601,7 +601,7 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.11.1';
 const APP_STAND = '25.11.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
@@ -1843,7 +1843,7 @@ function vertragHtml(c, r, k){
   })())+
   rows('Aufstellungsort', standort)+'</table>'+
   '<h2><span class="nr">3.</span>Mietdauer und Entgelt</h2>'+
-  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber '+saisonMinN()+' Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 K\u00fcndigung gem\u00e4\u00df Punkt 4')+
+  '<table>'+rows('Mietdauer', c.flat ? 'Unbefristet ab betriebsfertiger \u00dcbergabe (Flatrate) \u2013 Vertragsende und Aufl\u00f6sung gem\u00e4\u00df Punkt 4' : c.saison ? 'Saisonmiete \u00fcber '+saisonMinN()+' Saisonen ab betriebsfertiger \u00dcbergabe \u2013 Mietentgelt nur in '+c.saisonMonate+' Monaten je Saison, in den \u00fcbrigen '+(12-c.saisonMonate)+' Monaten Winterpause (R\u00fccknahme, Wartung und Einlagerung durch die Vermieterin) \u2013 Vertragsende und Aufl\u00f6sung gem\u00e4\u00df Punkt 4' : monate+' Monate ab betriebsfertiger \u00dcbergabe \u2013 Vertragsende und Aufl\u00f6sung gem\u00e4\u00df Punkt 4')+
   rows('Monatliches Mietentgelt', '<span class="betrag">'+netto+'</span> zzgl. gesetzlicher USt')+
   rows('Zahlungsweise','Monatlich im Voraus mittels SEPA-Lastschrift')+
   (r.montEinmalig > 0 ? rows('Lieferung und Montage', eur2.format(r.montEinmalig)+' zzgl. gesetzlicher USt \u2013 einmalig; der Einzug erfolgt gemeinsam mit der ersten Monatsrate') : '')+
@@ -1852,7 +1852,7 @@ function vertragHtml(c, r, k){
      : ' \u2013 einmalig, gesondert ausgewiesen; der Einzug erfolgt gemeinsam mit der ersten Monatsrate')+
      '<br><span class="klein">Bemessung: '+gebHerleitung(c, r)+'</span>') : '')+
   rows('Kalkulationsbasis', c.days+' Betriebstage/Woche, '+c.wg+' '+c.plural+'/Tag'+(c.hatWasser ? ', Wasserh\u00e4rte '+c.dh+' \u00b0dH (vorbehaltlich Wasseranalyse vor Ort)' : ''))+'</table>'+
-  '<h2><span class="nr">4.</span>K\u00fcndigung</h2>'+
+  '<h2><span class="nr">4.</span>Vertragsdauer, Vertragsende und Aufl\u00f6sung</h2>'+
   '<p>'+(c.flat
     ? 'Der Vertrag l\u00e4uft auf unbestimmte Zeit und kann von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden (Flatrate ohne Mindestlaufzeit).'
     : c.saison
@@ -1872,9 +1872,10 @@ function vertragHtml(c, r, k){
     (r.gebInRate ? 'Sie ist im monatlichen Mietentgelt bereits ber\u00fccksichtigt.' : 'Der Mieter ersetzt der Vermieterin die Geb\u00fchr in der unter Punkt 3 ausgewiesenen H\u00f6he; der Betrag wird gemeinsam mit der ersten Monatsrate eingezogen.')+
     ' Jede Ausfertigung dieser Vertragsurkunde tr\u00e4gt den Vermerk \u00fcber die Selbstberechnung.</p>' : '')+
   '<h2><span class="nr">5.</span>Vertragsende</h2>'+
-  '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.' : 'Nach Ablauf der Mietdauer bzw. nach wirksamer K\u00fcndigung nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck.')+' Der Mieter ist nicht verpflichtet, das Ger\u00e4t zu erwerben, und hat aus diesem Vertrag keinen Anspruch auf Erwerb. Ein Kauf ist m\u00f6glich; ein allf\u00e4lliger Kaufpreis wird in diesem Fall gesondert und unabh\u00e4ngig von diesem Mietvertrag vereinbart.</p>'+
+  '<p>'+(c.flat ? 'Nach wirksamer K\u00fcndigung' : 'Nach Ablauf der Mietdauer')+' nimmt die Vermieterin das Ger\u00e4t kostenfrei zur\u00fcck; bei vorzeitiger Aufl\u00f6sung gem\u00e4\u00df Punkt 4 tr\u00e4gt der Mieter die Kosten der Abholung. Der Mieter gibt das Ger\u00e4t vollst\u00e4ndig, gereinigt und \u2013 abgesehen von gew\u00f6hnlicher Abnutzung \u2013 in ordnungsgem\u00e4\u00dfem Zustand zur\u00fcck.'+' Der Mieter ist nicht verpflichtet, das Ger\u00e4t zu erwerben, und hat aus diesem Vertrag keinen Anspruch auf Erwerb. Ein Kauf ist m\u00f6glich; ein allf\u00e4lliger Kaufpreis wird in diesem Fall gesondert und unabh\u00e4ngig von diesem Mietvertrag vereinbart.</p>'+
   '<h2><span class="nr">6.</span>Eigentum und Sorgfalt</h2>'+
   '<p>Das Ger\u00e4t samt Zubeh\u00f6r bleibt w\u00e4hrend der gesamten Mietdauer im Eigentum der Vermieterin. Der Mieter verpflichtet sich zu sorgsamer Behandlung, bestimmungsgem\u00e4\u00dfem Gebrauch und ausschlie\u00dflicher Verwendung der von der Vermieterin bereitgestellten Betriebsmittel. Standortwechsel bed\u00fcrfen der Zustimmung der Vermieterin.</p>'+
+  '<p>Ab \u00dcbergabe tr\u00e4gt der Mieter die Gefahr des Verlusts, des Untergangs und der Besch\u00e4digung des Ger\u00e4ts, soweit diese nicht von der Vermieterin zu vertreten ist; der Mieter bezieht das Ger\u00e4t in seine Betriebs- bzw. Inhaltsversicherung ein. Sch\u00e4den aus unsachgem\u00e4\u00dfem Gebrauch, Gewalteinwirkung oder der Verwendung nicht freigegebener Betriebsmittel sind von den inkludierten Leistungen nicht umfasst und werden nach Aufwand verrechnet. Greifen Dritte auf das Ger\u00e4t zu (insbesondere durch Pf\u00e4ndung), weist der Mieter auf das Eigentum der Vermieterin hin und verst\u00e4ndigt diese unverz\u00fcglich.</p>'+
   '<h2><span class="nr">7.</span>Sonstiges</h2>'+
   '<p>'+(c.hatWasser ? 'Das endg\u00fcltige Mietentgelt wird nach Wasseranalyse am Aufstellungsort best\u00e4tigt. ' : '')+'Es gelten erg\u00e4nzend die Allgemeinen Gesch\u00e4ftsbedingungen der St\u00f6lner Ges.m.b.H.'+(agb ? ': <a href="'+agb+'" style="color:#E3007A">'+agb.replace('https://','')+'</a>' : '')+'. \u00c4nderungen und Erg\u00e4nzungen bed\u00fcrfen der Schriftform. Es gilt \u00f6sterreichisches Recht; Gerichtsstand ist Wien.</p>'+
   '<div class="block"><div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift St\u00f6lner Ges.m.b.H.</div></div><div><div class="line">Ort, Datum &middot; Unterschrift '+(k.firma||'Mieter')+'</div></div></div></div>'+
@@ -1893,7 +1894,7 @@ function vertragHtml(c, r, k){
   rows('BIC', k.bic || blank)+
   rows('Mandatsreferenz', vnr)+
   rows('Gl\u00e4ubiger-Identifikationsnummer','wird von der St\u00f6lner Ges.m.b.H. erg\u00e4nzt')+
-  rows('Zahlungsart','Wiederkehrende Zahlung \u00b7 monatlich im Voraus \u00b7 '+netto+' zzgl. gesetzlicher USt')+'</table>'+
+  rows('Zahlungsart','Wiederkehrende Zahlung \u00b7 monatlich im Voraus'+(c.saison ? ' in den '+c.saisonMonate+' Saisonmonaten' : '')+' \u00b7 '+netto+' zzgl. gesetzlicher USt')+'</table>'+
   '<div class="sig"><div><div class="line">Ort, Datum &middot; Unterschrift Kontoinhaber (SEPA-Mandat)</div></div><div></div></div></div>'+
   '<p class="hinweis">Vertragsentwurf, erstellt mit dem St\u00f6lner Gastrotechnik-Mietkalkulator am '+heute+'. Dieser Entwurf ersetzt keine Rechtsberatung und wird erst mit beidseitiger Unterschrift der gepr\u00fcften Endfassung wirksam.</p>'+
   '<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
