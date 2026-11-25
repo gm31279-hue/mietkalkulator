@@ -601,8 +601,8 @@ footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <script>
 /* App-Version: bei jedem Release hochzählen (sichtbar im Kopf und Footer) */
-const APP_VERSION = '1.10.1';
-const APP_STAND = '19.11.2026';
+const APP_VERSION = '1.10.2';
+const APP_STAND = '25.11.2026';
 
 /* Datenstand: Beispielrechnung V2, Juli 2026 (Brita-Konditionen lt. Feedback O.)
    Kategorien: einheit = Bezugseinheit (Singular), plural = Mehrzahl · posten = Verbrauchspositionen (preis € je Gebinde, je = Einheiten je Gebinde)
@@ -1815,7 +1815,7 @@ function vertragHtml(c, r, k){
   '.sig{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:34px;page-break-inside:avoid;break-inside:avoid}'+
   '.sig .line{border-top:1px solid #191919;padding-top:5px;font-size:11px;color:var(--g)}'+
   '.block{page-break-inside:avoid;break-inside:avoid}'+
-  '.vermerk{border:1px solid #191919;padding:10px 14px 12px;margin-top:22px;page-break-inside:avoid;break-inside:avoid;font-size:12px}'+
+  '.gruende{margin:4px 0 8px;padding-left:20px}.gruende li{margin:2px 0}.vermerk{border:1px solid #191919;padding:10px 14px 12px;margin-top:22px;page-break-inside:avoid;break-inside:avoid;font-size:12px}'+
   '.vermerk td:first-child{width:40%}.vermerk .sig{margin-top:22px}'+
   '.sepa{page-break-before:always;break-before:page}'+
   '.sepa .abtrennen{font-size:10.5px;color:var(--g);margin-bottom:10px}'+
@@ -1859,7 +1859,16 @@ function vertragHtml(c, r, k){
     : c.saison
     ? 'Die Mindestlaufzeit betr\u00e4gt '+saisonMinN()+' Saisonen. Eine ordentliche K\u00fcndigung ist fr\u00fchestens zum Ende der '+saisonMinN()+'. Saison m\u00f6glich. Danach l\u00e4uft der Vertrag auf unbestimmte Zeit weiter und kann von beiden Seiten jeweils zum Ende einer Saison schriftlich gek\u00fcndigt werden; w\u00e4hrend einer laufenden Saison ist die ordentliche K\u00fcndigung ausgeschlossen.'
     : 'W\u00e4hrend der vereinbarten Mietdauer von '+monate+' Monaten ist die ordentliche K\u00fcndigung ausgeschlossen. Wird der Vertrag nicht sp\u00e4testens einen Monat vor Ablauf der Mietdauer schriftlich gek\u00fcndigt, verl\u00e4ngert er sich auf unbestimmte Zeit und kann danach von beiden Seiten mit einer Frist von einem Monat zum Monatsende schriftlich gek\u00fcndigt werden.')+
-  ' Das Recht beider Vertragsparteien zur au\u00dferordentlichen K\u00fcndigung aus wichtigem Grund \u2013 insbesondere bei Zahlungsverzug trotz Mahnung oder vertragswidrigem Gebrauch \u2013 bleibt unber\u00fchrt.</p>'+
+  '</p>'+
+  '<p><b>Vorzeitige Aufl\u00f6sung durch die Vermieterin.</b> Die Vermieterin ist berechtigt, den Vertrag jederzeit mit sofortiger Wirkung schriftlich aufzul\u00f6sen, insbesondere wenn</p>'+
+  '<ol class="gruende">'+
+  '<li>der Mieter mit zwei Monatsraten oder einem Betrag in dieser H\u00f6he trotz schriftlicher Mahnung unter Setzung einer Nachfrist von 14 Tagen in Verzug ist oder zwei SEPA-Lastschriften mangels Deckung oder durch Widerspruch nicht eingel\u00f6st werden;</li>'+
+  '<li>gegen den Mieter Exekution gef\u00fchrt wird oder sich seine Verm\u00f6gensverh\u00e4ltnisse so wesentlich verschlechtern, dass die Erf\u00fcllung des Vertrags gef\u00e4hrdet ist \u2013 soweit gesetzlich zul\u00e4ssig;</li>'+
+  '<li>das Ger\u00e4t vertragswidrig gebraucht, ohne Zustimmung der Vermieterin an einen anderen Standort verbracht oder Dritten \u00fcberlassen wird;</li>'+
+  '<li>der Mieter der Vermieterin trotz Aufforderung den Zugang zum Ger\u00e4t f\u00fcr Wartung, Service oder Kontrolle verweigert;</li>'+
+  '<li>der Mieter den Betrieb am Aufstellungsort einstellt, verpachtet oder \u00fcbertr\u00e4gt;</li>'+
+  '<li>der Mieter bei Vertragsabschluss wesentliche Angaben unrichtig gemacht hat.</li></ol>'+
+  '<p>Wird der Vertrag aus einem dieser Gr\u00fcnde aufgel\u00f6st, ist die Vermieterin berechtigt, das Ger\u00e4t unverz\u00fcglich abzuholen; der Mieter gew\u00e4hrt hierf\u00fcr Zutritt zum Aufstellungsort. Der Mieter ersetzt der Vermieterin den daraus entstehenden Schaden, insbesondere die bis zum Ende der vereinbarten '+(c.flat ? 'K\u00fcndigungsfrist' : 'Mindestlaufzeit')+' ausstehenden Mietentgelte, abz\u00fcglich der durch die vorzeitige R\u00fcckgabe ersparten Aufwendungen, sowie die Kosten der Abholung. Das Recht des Mieters zur Aufl\u00f6sung aus wichtigem Grund bleibt unber\u00fchrt.</p>'+
   (r.gebuehr > 0 ? '<p style="page-break-inside:avoid;break-inside:avoid">Die Geb\u00fchr f\u00fcr Bestandvertr\u00e4ge nach \u00a7 33 TP 5 Geb\u00fchrengesetz wird von der Vermieterin selbst berechnet und an das Finanzamt entrichtet. '+
     (r.gebInRate ? 'Sie ist im monatlichen Mietentgelt bereits ber\u00fccksichtigt.' : 'Der Mieter ersetzt der Vermieterin die Geb\u00fchr in der unter Punkt 3 ausgewiesenen H\u00f6he; der Betrag wird gemeinsam mit der ersten Monatsrate eingezogen.')+
     ' Jede Ausfertigung dieser Vertragsurkunde tr\u00e4gt den Vermerk \u00fcber die Selbstberechnung.</p>' : '')+
